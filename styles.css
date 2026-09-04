@@ -23,6 +23,15 @@
   --shadow-pill-hover: 0 4px 10px rgba(0, 0, 0, 0.1);
   --focus-ring: 0 0 0 3px rgba(10, 132, 255, 0.25);
   --scrollbar-thumb: rgba(0, 0, 0, 0.18);
+  --hero-ring: rgba(10, 132, 255, 0.55);
+  --hero-node: #0a84ff;
+  --hero-node-core: #0040dd;
+  --hero-spoke: rgba(10, 132, 255, 0.3);
+  --hero-title-a: #0a84ff;
+  --hero-title-b: #34aadc;
+  --hero-chip-bg: rgba(10, 132, 255, 0.08);
+  --hero-chip-border: rgba(10, 132, 255, 0.22);
+  --hero-chip-text: #0a63c9;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -45,6 +54,15 @@
     --shadow-pill-hover: 0 4px 12px rgba(0, 0, 0, 0.4);
     --focus-ring: 0 0 0 3px rgba(10, 132, 255, 0.35);
     --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+    --hero-ring: rgba(64, 156, 255, 0.6);
+    --hero-node: #409cff;
+    --hero-node-core: #7ac1ff;
+    --hero-spoke: rgba(64, 156, 255, 0.35);
+    --hero-title-a: #409cff;
+    --hero-title-b: #66d4ff;
+    --hero-chip-bg: rgba(64, 156, 255, 0.14);
+    --hero-chip-border: rgba(64, 156, 255, 0.32);
+    --hero-chip-text: #8fd0ff;
   }
 }
 
@@ -126,6 +144,118 @@ body {
 #home-btn:active {
   transform: scale(0.96);
   background: rgba(120, 120, 128, 0.26);
+}
+
+/* ---------- Hero (startup screen) ---------- */
+
+#hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 36px 24px 22px;
+  overflow: hidden;
+  max-height: 420px;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: max-height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#hero-mark {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 14px;
+  animation: hero-float 5.5s ease-in-out infinite;
+}
+
+#hero-mark svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hero-mark-ring {
+  stroke: var(--hero-ring);
+}
+
+.hero-mark-spoke {
+  stroke: var(--hero-spoke);
+  stroke-width: 1.5;
+}
+
+.hero-mark-node {
+  fill: var(--hero-node);
+}
+
+.hero-mark-node--core {
+  fill: var(--hero-node-core);
+}
+
+@keyframes hero-float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(4deg);
+  }
+}
+
+#hero-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+#hero-title-accent {
+  background: linear-gradient(120deg, var(--hero-title-a), var(--hero-title-b));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+#hero-subtitle {
+  margin: 8px 0 0;
+  max-width: 34ch;
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  color: var(--muted);
+}
+
+#hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+}
+
+.hero-chip {
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: var(--hero-chip-bg);
+  border: 1px solid var(--hero-chip-border);
+  color: var(--hero-chip-text);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* Conversation started (2+ bubbles) -> collapse hero. Progressive enhancement:
+   browsers without :has() simply keep the hero visible. */
+#chat-app:has(#chat-log > .bubble:nth-child(2)) #hero {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
 }
 
 /* ---------- Chat log ---------- */
@@ -320,6 +450,16 @@ body {
   box-shadow: 0 1px 4px rgba(10, 132, 255, 0.35);
 }
 
+/* ---------- Focus states (unified) ---------- */
+
+#home-btn:focus-visible,
+.option-btn:focus-visible,
+.nav-btn:focus-visible,
+#free-text-form button[type="submit"]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 /* ---------- Reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -332,8 +472,13 @@ body {
   .option-btn,
   .nav-btn,
   #free-text-input,
-  #free-text-form button[type="submit"] {
+  #free-text-form button[type="submit"],
+  #hero {
     transition: none;
+  }
+
+  #hero-mark {
+    animation: none;
   }
 }
 
@@ -350,5 +495,18 @@ body {
 
   #free-text-form {
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  #hero {
+    padding: 26px 16px 18px;
+  }
+
+  #hero-mark {
+    width: 52px;
+    height: 52px;
+  }
+
+  #hero-title {
+    font-size: 25px;
   }
 }
