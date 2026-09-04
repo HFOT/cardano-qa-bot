@@ -9,7 +9,16 @@ export default {
         { label: "委任のやり方", next: "drep-howto" },
         { label: "その他の選択肢・仕組み", next: "drep-other" },
         { label: "ガバナンスアクション・議案について", next: "drep-actions" },
+        { label: "TARGET15: 集中を避けたおすすめDRep", next: "drep-recommend" },
       ],
+    },
+
+    "drep-recommend": {
+      type: "recommend-drep",
+      label: "TARGET15: 集中を避けたおすすめDRep",
+      loadingText: "hfot.github.io/drep-terminal-v6 で投票力データを確認しています…",
+      errorText: "現在データを取得できませんでした。https://hfot.github.io/drep-terminal-v6/ を直接確認してください。",
+      keywords: ["TARGET15", "おすすめDRep", "集中回避"],
     },
 
     "drep-basics": {

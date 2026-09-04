@@ -154,6 +154,37 @@ function renderNode(nodeId, opts = {}) {
       });
     return;
   }
+
+  if (node.type === "recommend-drep") {
+    appendBubble(node.loadingText, "bot");
+    clearOptions();
+    const seq = ++recommendSeq;
+    fetchDrepTarget15Candidates()
+      .then((candidates) => {
+        if (seq !== recommendSeq || state.currentNodeId !== nodeId) return;
+        if (!candidates || candidates.length === 0) throw new Error("empty");
+        const picked = pickRandomN(candidates, 5);
+        const lines = picked.map((d, i) => {
+          const displayName = d.name_ja || d.name || d.id;
+          const vpAda = Math.round(d.latest_vp * 1_000_000).toLocaleString();
+          const sharePct = d.sharePct.toFixed(2);
+          return `${i + 1}. ${displayName}(#${d.rank}) / 投票力${vpAda}₳(全体の${sharePct}%) / ${d.id}`;
+        });
+        appendBubble(
+          "TARGET15(上位10 DRepへの集中を避ける思想)に沿って、投票力1.5%未満のDRepを5件ランダムに紹介します:\n\n" +
+            lines.join("\n") +
+            "\n\n委任前に各DRepの最新の投票実績をGovTool(https://gov.tools)で確認してください。",
+          "bot"
+        );
+        renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+      })
+      .catch(() => {
+        if (seq !== recommendSeq || state.currentNodeId !== nodeId) return;
+        appendBubble(node.errorText, "bot");
+        renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+      });
+    return;
+  }
 }
 
 function goBack() {
@@ -217,6 +248,30 @@ async function fetchRelayHealthPools() {
   const jsonText = extractBalancedJson(html, arrStart, "[", "]");
   if (!jsonText) return null;
   return JSON.parse(jsonText);
+}
+
+const DREP_TERMINAL_URL = "https://hfot.github.io/drep-terminal-v6/";
+
+async function fetchDrepTarget15Candidates() {
+  const res = await fetch(DREP_TERMINAL_URL);
+  const html = await res.text();
+  const marker = "const DB";
+  const markerIdx = html.indexOf(marker);
+  if (markerIdx === -1) return null;
+  const braceIdx = html.indexOf("{", markerIdx);
+  if (braceIdx === -1) return null;
+  const jsonText = extractBalancedJson(html, braceIdx, "{", "}");
+  if (!jsonText) return null;
+  const db = JSON.parse(jsonText);
+  const dreps = db.dreps;
+  const totalVpByEpoch = db.total_vp;
+  if (!Array.isArray(dreps) || !totalVpByEpoch) return null;
+  const latestEpoch = Math.max(...Object.keys(totalVpByEpoch).map(Number));
+  const totalVp = totalVpByEpoch[String(latestEpoch)];
+  if (!totalVp) return null;
+  return dreps
+    .filter((d) => typeof d.latest_vp === "number" && d.latest_vp / totalVp < 0.015)
+    .map((d) => Object.assign({}, d, { sharePct: (d.latest_vp / totalVp) * 100 }));
 }
 
 function buildKeywordIndex(nodesMap) {
