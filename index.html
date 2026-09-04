@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cardano Q&Aボット</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="chat-app">
+    <header id="chat-header">
+      <h1>Cardano Q&amp;Aボット</h1>
+      <button id="home-btn" type="button">トップに戻る</button>
+    </header>
+    <div id="chat-log" role="log" aria-live="polite"></div>
+    <div id="chat-options"></div>
+    <form id="free-text-form">
+      <input id="free-text-input" type="text" placeholder="気になることを入力(例: 手数料、シードフレーズ)" autocomplete="off">
+      <button type="submit">送信</button>
+    </form>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
