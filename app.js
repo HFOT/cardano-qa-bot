@@ -174,6 +174,8 @@ function renderNode(nodeId, opts = {}) {
     if (node.embed) {
       const box = document.createElement("div");
       box.className = "embed-box";
+      const viewport = document.createElement("div");
+      viewport.className = "embed-viewport";
       const frame = document.createElement("iframe");
       frame.src = node.embed;
       frame.loading = "lazy";
@@ -185,9 +187,21 @@ function renderNode(nodeId, opts = {}) {
       open.rel = "noopener";
       open.className = "embed-open";
       open.textContent = "全画面で開く ↗";
-      box.appendChild(frame);
+      viewport.appendChild(frame);
+      box.appendChild(viewport);
       box.appendChild(open);
       appendBubble(box, "bot");
+      // 埋め込み先はPC幅想定のページが多いので、仮想幅で描画して丸ごと縮小表示する
+      // (右側が切れるのを防ぐ。少し小さく見えるのは仕様)
+      const VIRTUAL_W = 1080;
+      const visibleW = viewport.clientWidth;
+      const visibleH = viewport.clientHeight;
+      if (visibleW > 0 && visibleW < VIRTUAL_W) {
+        const scale = visibleW / VIRTUAL_W;
+        frame.style.width = VIRTUAL_W + "px";
+        frame.style.height = Math.round(visibleH / scale) + "px";
+        frame.style.transform = "scale(" + scale + ")";
+      }
     }
     clearOptions();
     renderNavButtons({ showBack: state.history.length > 0, showHome: true });
