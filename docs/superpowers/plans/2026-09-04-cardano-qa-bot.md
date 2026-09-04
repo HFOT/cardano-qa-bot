@@ -1745,3 +1745,52 @@ python -m http.server 8000
 git add README.md .gitignore
 git commit -m "docs: add README and gitignore"
 ```
+
+---
+
+### Task 10: Apple風デザインリニューアル
+
+ユーザーからの追加要件(2026-09-04、実装中に受領): 「アップル風のおしゃれなやり取りができる、デザイン性の高いBOTの画面にしてほしい」。
+機能・DOM構造・エンジン(app.js)は完成済みなので、このタスクは見た目だけを作り替える。
+
+**Files:**
+- Modify: `styles.css`(全面書き換え)
+- Modify: `index.html`(class付与などマークアップの最小調整のみ許可)
+
+**Interfaces:**
+- Consumes: 既存のDOM要素ID(`#chat-log` `#chat-options` `#free-text-form` `#free-text-input` `#home-btn`)と、app.jsが動的に生成する要素のclass(`bubble bot` / `bubble user` / `option-btn` / `nav-btn` / `nav-buttons`)
+- Produces: なし(見た目のみ)
+- 制約: **app.jsは1文字も変更しない**。id/classの名前も変更しない(app.jsが参照しているため)。index.htmlのDOM構造(要素の種類・ネスト・id)も変更しない。許されるのはclass追加・meta追加・styles.cssの完全書き換えのみ。
+
+**デザイン方向(Apple / iMessage風)**:
+
+- [ ] **Step 1: styles.cssを全面的に書き換える**
+
+以下のデザイン言語で書き換える(実装者のデザイン判断で細部は最良に仕上げてよいが、方向性は固定):
+
+1. **配色**: ライトモード基調。背景はわずかに暖かい白(#f5f5f7 — Apple公式サイトの背景色)、ヘッダーは磨りガラス(backdrop-filter: blur + 半透明白)。BOTバブルは#e9e9eb(iMessageのグレー)、ユーザーバブルはiMessageブルー(#0a84ff〜#007aff)の微グラデーション。文字は#1d1d1f。
+2. **フォント**: -apple-system, "SF Pro Text", "Hiragino Sans", "Yu Gothic UI", sans-serif 系スタック。見出しはletter-spacing微調整。
+3. **バブル**: iMessage風の大きめ角丸(18px前後)、送信側/受信側で尻尾側の角だけ小さく。box-shadowは極薄(0 1px 2px rgba(0,0,0,.06)程度)。登場時に軽いフェード+スライドイン(@keyframes、0.25s ease-out)。
+4. **選択肢ボタン**: ピル型(角丸9999px)、白背景+薄いボーダー、hoverで軽く浮く(translateY(-1px)+shadow強化)、activeで沈む。transition 0.15s。
+5. **入力欄**: ピル型、フォーカス時にiOS風のフォーカスリング(box-shadow: 0 0 0 3px rgba(10,132,255,.25))。送信ボタンは円形または角丸のブルー。
+6. **全体**: 余白をたっぷり取り、区切り線は極薄。max-width 640pxは維持。スクロールバーは細くスタイリング。ダークモード対応は @media (prefers-color-scheme: dark) で、Appleのダーク配色(#1c1c1e背景、#2c2c2e BOTバブル)に切り替え。
+7. **アクセシビリティ**: コントラスト比を保つ(ライトモードの本文は#1d1d1fで十分)。prefers-reduced-motion でアニメーション無効化。
+
+- [ ] **Step 2: index.htmlの最小調整**
+
+必要な場合のみ: meta theme-color追加、classの追加。DOM構造・idは不変。
+
+- [ ] **Step 3: ローカルサーバーで手動確認する**
+
+- ライト/ダーク両モードで表示確認(DevToolsのエミュレーション)
+- バブル・ボタン・入力欄がApple風の見た目になっている
+- 全機能(選択肢クリック、自由文入力、戻る/トップ)が引き続き動作する(app.js未変更なので動くはずだが確認)
+- スマホ幅(375px)で崩れない
+- コンソールにエラーなし
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add styles.css index.html
+git commit -m "style: Apple/iMessage-inspired visual redesign"
+```
