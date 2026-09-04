@@ -1,4 +1,5 @@
 import walletContent from "./content/wallet.js";
+import spoContent from "./content/spo.js";
 
 const HOME_NODE_ID = "home";
 
@@ -7,11 +8,16 @@ const HOME_NODE = {
   text: "こんにちは。Cardano Q&Aボットです。何について知りたいですか?",
   options: [
     { label: "ウォレット操作について", next: "wallet-root" },
+    { label: "SPO(プール)選びについて", next: "spo-root" },
   ],
 };
 
 function mergeNodes() {
-  return Object.assign({ [HOME_NODE_ID]: HOME_NODE }, walletContent.nodes);
+  return Object.assign(
+    { [HOME_NODE_ID]: HOME_NODE },
+    walletContent.nodes,
+    spoContent.nodes
+  );
 }
 
 const nodes = mergeNodes();
