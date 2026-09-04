@@ -136,8 +136,87 @@ function goHome() {
 
 homeBtn.addEventListener("click", goHome);
 
+function buildKeywordIndex(nodesMap) {
+  const index = [];
+  Object.entries(nodesMap).forEach(([nodeId, node]) => {
+    if (node.type === "answer" && Array.isArray(node.keywords)) {
+      node.keywords.forEach((keyword) => {
+        index.push({ nodeId, keyword });
+      });
+    }
+  });
+  return index;
+}
+
+const keywordIndex = buildKeywordIndex(nodes);
+
+function matchKeywords(inputText) {
+  const counts = new Map();
+  const matchedKeywordsByNode = new Map();
+
+  keywordIndex.forEach(({ nodeId, keyword }) => {
+    if (inputText.includes(keyword)) {
+      counts.set(nodeId, (counts.get(nodeId) || 0) + 1);
+      const list = matchedKeywordsByNode.get(nodeId) || [];
+      list.push(keyword);
+      matchedKeywordsByNode.set(nodeId, list);
+    }
+  });
+
+  if (counts.size === 0) {
+    return { bestNodeIds: [], matchedKeywordsByNode };
+  }
+
+  const maxCount = Math.max(...counts.values());
+  const bestNodeIds = [...counts.entries()]
+    .filter(([, count]) => count === maxCount)
+    .map(([nodeId]) => nodeId);
+
+  return { bestNodeIds, matchedKeywordsByNode };
+}
+
+function handleFreeTextSubmit(text) {
+  const trimmed = text.trim();
+  if (!trimmed) return;
+  appendBubble(trimmed, "user");
+
+  const { bestNodeIds, matchedKeywordsByNode } = matchKeywords(trimmed);
+
+  if (bestNodeIds.length === 1) {
+    const nodeId = bestNodeIds[0];
+    const matchedKeyword = matchedKeywordsByNode.get(nodeId)[0];
+    state.history.push(state.currentNodeId);
+    renderNode(nodeId, { matchedKeyword });
+    return;
+  }
+
+  if (bestNodeIds.length > 1) {
+    appendBubble("もしかして、次のどれかについて聞きたいですか?", "bot");
+    const options = bestNodeIds.map((nodeId) => ({
+      label: nodes[nodeId].label,
+      next: nodeId,
+    }));
+    renderOptionButtons(options, (opt) => {
+      appendBubble(opt.label, "user");
+      state.history.push(state.currentNodeId);
+      renderNode(opt.next);
+    });
+    return;
+  }
+
+  appendBubble("うまく聞き取れませんでした。下の選択肢から選んでください。", "bot");
+  const fallbackNode = nodes[state.currentNodeId];
+  if (fallbackNode && fallbackNode.type === "choice") {
+    renderNode(state.currentNodeId);
+  } else {
+    goHome();
+  }
+}
+
 freeTextForm.addEventListener("submit", (e) => {
   e.preventDefault();
+  handleFreeTextSubmit(freeTextInput.value);
+  freeTextInput.value = "";
 });
 
 renderNode(HOME_NODE_ID);
