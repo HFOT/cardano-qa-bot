@@ -1,9 +1,10 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=23";
-import spoContent from "./content/spo.js?v=23";
-import drepContent from "./content/drep.js?v=23";
-import scamContent from "./content/scam.js?v=23";
-import valueContent from "./content/value.js?v=23";
+import walletContent from "./content/wallet.js?v=24";
+import spoContent from "./content/spo.js?v=24";
+import drepContent from "./content/drep.js?v=24";
+import scamContent from "./content/scam.js?v=24";
+import valueContent from "./content/value.js?v=24";
+import midnightContent from "./content/midnight.js?v=24";
 
 const HOME_NODE_ID = "home";
 
@@ -16,6 +17,7 @@ const HOME_NODE = {
     { label: "DRep選びについて", next: "drep-root" },
     { label: "詐欺の手口を知る", next: "scam-root" },
     { label: "ADAの価値は上がるの?", next: "value-root" },
+    { label: "Midnightって何?", next: "mn-root" },
   ],
 };
 
@@ -26,7 +28,8 @@ function mergeNodes() {
     spoContent.nodes,
     drepContent.nodes,
     scamContent.nodes,
-    valueContent.nodes
+    valueContent.nodes,
+    midnightContent.nodes
   );
 }
 
@@ -338,7 +341,9 @@ function goBack() {
 }
 
 function goHome() {
+  // 会話ログをリセットして初期画面(ヒーロー+紹介枠)に戻す
   state.history = [];
+  chatLog.replaceChildren();
   renderNode(HOME_NODE_ID);
 }
 

@@ -1,12 +1,12 @@
 # What's Cardano?
 
-Cardano初心者向けに、ウォレット操作・SPO(プール)選び・DRep選び・詐欺の手口・ADAの価値の見方の5トピックを
+Cardano初心者向けに、ウォレット操作・SPO(プール)選び・DRep選び・詐欺の手口・ADAの価値の見方・Midnightの6トピックを
 チャット形式(ボタン選択+自由文入力)で案内する、完全静的なQ&Aボットです。
 AI APIは使用していません。回答内容はすべて `content/*.js` に決定木として記述されています。
 
-全体で128ノード(選択肢24 + 回答102 + 推薦2)。ウォレット39ノード(7カテゴリ)、
+全体で134ノード(選択肢25 + 回答107 + 推薦2)。ウォレット39ノード(7カテゴリ)、
 SPO選び31ノード(5カテゴリ+リレー健全性ランキング連携)、DRep選び33ノード(6カテゴリ+TARGET15連携。先行事例に学ぶガバナンスリスク含む)、
-詐欺の手口9ノード(実際にあった8つの手口)、ADAの価値の見方16ノード(価格予想はせず、価値の仕組み・下落要因・報酬とTreasuryの行方・ホルダーにできることを整理)。
+詐欺の手口9ノード(実際にあった8つの手口)、ADAの価値の見方16ノード(価格予想はせず、価値の仕組み・下落要因・報酬とTreasuryの行方・ホルダーにできることを整理)、Midnight 6ノード(パートナーチェーン・NIGHT/DUST・ADAホルダーとの関係)。
 
 外部への読み取り専用fetchは3つだけ: SPO推薦(`hfot.github.io/cardano-relay-health`)、
 DRep推薦(`hfot.github.io/drep-terminal-v6`)、ADA価格表示(CoinGecko `simple/price`、無料・キー不要)。
@@ -33,7 +33,7 @@ python -m http.server 8000
 
 ## コンテンツの追加・編集
 
-- 既存トピックの回答を直接編集する場合は `content/wallet.js` / `content/spo.js` / `content/drep.js` / `content/scam.js` / `content/value.js` を編集する
+- 既存トピックの回答を直接編集する場合は `content/wallet.js` / `content/spo.js` / `content/drep.js` / `content/scam.js` / `content/value.js` / `content/midnight.js` を編集する
 - 回答文の中では `**強調したい語**` の記法が使え、アクセント色の太字で表示される(実装はDOM組み立てのみで`innerHTML`不使用)
 - answerノードに `embed: "https://..."` を付けると、回答の下にそのページをミニブラウザ(iframe)として埋め込める(埋め込み先がX-Frame-Options等でブロックしていないこと)
 - 新しいトピックを追加する場合:
