@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <title>What's Cardano?</title>
-<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
   <div id="chat-app">
@@ -20,12 +20,32 @@
       <p id="hero-subtitle">はじめての方でも大丈夫。ウォレットからDRep投票まで、知りたいことをやさしく道案内します。</p>
     </section>
     <section id="promo">
-      <a id="promo-card" href="https://hfot.github.io/holders-governance-skill/" target="_blank" rel="noopener">
-        <span class="promo-label">Holders' Governance Skill</span>
-        <span class="promo-title">研ぎ澄ませるための情報。</span>
-        <span class="promo-desc">DRep・SPO・ガバナンスを数字で読むツール群。このボットの姉妹サイトです。</span>
+      <a id="promo-head" href="https://hfot.github.io/holders-governance-skill/" target="_blank" rel="noopener">
+        <img class="promo-hub-icon" src="icons/hub.svg" alt="" width="34" height="34">
+        <span class="promo-head-text">
+          <span class="promo-label">Holders' Governance Skill</span>
+          <span class="promo-desc">What's Cardano? も含む、作成者CORNのCardanoツール総合サイト</span>
+        </span>
         <span class="promo-open">開く ↗</span>
       </a>
+      <nav id="promo-apps" aria-label="Governance Skill のツール">
+        <a class="app" href="https://hfot.github.io/spo-onchain-alive/" target="_blank" rel="noopener">
+          <img class="app-icon" src="icons/alive.svg" alt="" width="54" height="54">
+          <span class="app-name">Onchain Alive</span>
+        </a>
+        <a class="app" href="https://hfot.github.io/cardano-relay-health/" target="_blank" rel="noopener">
+          <img class="app-icon" src="icons/relay.svg" alt="" width="54" height="54">
+          <span class="app-name">Relay Health</span>
+        </a>
+        <a class="app" href="https://hfot.github.io/cardano-two-delegations/" target="_blank" rel="noopener">
+          <img class="app-icon" src="icons/deleg.svg" alt="" width="54" height="54">
+          <span class="app-name">2つの委任</span>
+        </a>
+        <a class="app" href="https://hfot.github.io/cignal-radar/cignal-signal-v2.html" target="_blank" rel="noopener">
+          <img class="app-icon" src="icons/signal.svg" alt="" width="54" height="54">
+          <span class="app-name">CIGNAL Signal</span>
+        </a>
+      </nav>
     </section>
     <div id="chat-log" role="log" aria-live="polite"></div>
     <div id="chat-options"></div>
@@ -34,6 +54,6 @@
       <button type="submit">送信</button>
     </form>
   </div>
-  <script type="module" src="app.js?v=8"></script>
+  <script type="module" src="app.js?v=9"></script>
 </body>
 </html>

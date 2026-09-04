@@ -224,20 +224,27 @@ body {
 #promo {
   display: flex;
   justify-content: center;
-  padding: 4px 16px 12px;
+  padding: 4px 16px 14px;
   overflow: hidden;
-  max-height: 220px;
+  /* ヒーロー+ヘッド+アイコングリッドの自然高より大きく保つこと(超えると下が切れる) */
+  max-height: 280px;
   opacity: 1;
   transition: max-height 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease,
     padding 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-#promo-card {
-  display: flex;
+#promo {
   flex-direction: column;
-  gap: 4px;
-  width: min(440px, 100%);
-  padding: 16px 18px;
+  align-items: center;
+  gap: 12px;
+}
+
+#promo-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(460px, 100%);
+  padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--panel);
@@ -246,44 +253,97 @@ body {
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-#promo-card:hover {
+#promo-head:hover {
   transform: translateY(-1px);
   border-color: var(--accent);
   box-shadow: var(--shadow-pill-hover);
 }
 
-#promo-card:focus-visible {
+#promo-head:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
 
-.promo-label {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
+.promo-hub-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  flex: none;
 }
 
-.promo-title {
-  font-size: 16px;
+.promo-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.promo-label {
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.05em;
   color: var(--text);
 }
 
 .promo-desc {
-  font-size: 12.5px;
-  line-height: 1.55;
+  font-size: 11px;
+  line-height: 1.45;
   color: var(--muted);
 }
 
 .promo-open {
-  align-self: flex-end;
-  font-size: 12px;
+  margin-left: auto;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--accent);
-  margin-top: 2px;
+  flex: none;
+}
+
+/* iPhoneのホーム画面風のアイコングリッド */
+#promo-apps {
+  display: flex;
+  justify-content: center;
+  gap: clamp(14px, 4vw, 26px);
+}
+
+#promo-apps .app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 64px;
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+
+#promo-apps .app:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+
+#promo-apps .app:active {
+  transform: scale(0.95);
+}
+
+#promo-apps .app:focus-visible {
+  outline: none;
+  border-radius: 14px;
+  box-shadow: var(--focus-ring);
+}
+
+.app-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 13px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.app-name {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-align: center;
+  white-space: nowrap;
 }
 
 #chat-app:has(#chat-log > .bubble:nth-child(2)) #promo {
