@@ -119,6 +119,35 @@ function renderNode(nodeId, opts = {}) {
     renderNavButtons({ showBack: state.history.length > 0, showHome: true });
     return;
   }
+
+  if (node.type === "recommend-pool") {
+    appendBubble(node.loadingText, "bot");
+    clearOptions();
+    fetchRelayHealthPools()
+      .then((pools) => {
+        if (!pools || pools.length === 0) throw new Error("empty");
+        const good = pools.filter((p) => typeof p.score === "number" && p.score >= 85);
+        const picked = pickRandomN(good, 5);
+        const lines = picked.map((p, i) => {
+          const ticker = p.ticker || "(Ticker未設定)";
+          const grade = p.score >= 95 ? "S" : "A";
+          const marginPct = Math.round(p.margin * 1000) / 10;
+          const stakeText = Math.round(p.stake).toLocaleString();
+          return `${i + 1}. [${ticker}] ${grade}(${p.score}点) / ステーク${stakeText}₳ / 委任者${p.delegators}人 / 手数料${marginPct}%+${p.fixedAda}₳`;
+        });
+        appendBubble(
+          "健全性ランキング(hfot.github.io/cardano-relay-health)からS・Aグレードのプールを5件ランダムに紹介します:\n\n" +
+            lines.join("\n"),
+          "bot"
+        );
+        renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+      })
+      .catch(() => {
+        appendBubble(node.errorText, "bot");
+        renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+      });
+    return;
+  }
 }
 
 function goBack() {
@@ -136,10 +165,58 @@ function goHome() {
 
 homeBtn.addEventListener("click", goHome);
 
+function pickRandomN(arr, n) {
+  const copy = arr.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = copy[i];
+    copy[i] = copy[j];
+    copy[j] = tmp;
+  }
+  return copy.slice(0, n);
+}
+
+function extractBalancedJson(text, startIdx, openChar, closeChar) {
+  if (text[startIdx] !== openChar) return null;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = startIdx; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escape) { escape = false; }
+      else if (ch === "\\") { escape = true; }
+      else if (ch === '"') { inString = false; }
+      continue;
+    }
+    if (ch === '"') { inString = true; continue; }
+    if (ch === openChar) depth++;
+    else if (ch === closeChar) {
+      depth--;
+      if (depth === 0) return text.slice(startIdx, i + 1);
+    }
+  }
+  return null;
+}
+
+const RELAY_HEALTH_URL = "https://hfot.github.io/cardano-relay-health/";
+
+async function fetchRelayHealthPools() {
+  const res = await fetch(RELAY_HEALTH_URL);
+  const html = await res.text();
+  const marker = "const data=";
+  const markerIdx = html.indexOf(marker);
+  if (markerIdx === -1) return null;
+  const arrStart = markerIdx + marker.length;
+  const jsonText = extractBalancedJson(html, arrStart, "[", "]");
+  if (!jsonText) return null;
+  return JSON.parse(jsonText);
+}
+
 function buildKeywordIndex(nodesMap) {
   const index = [];
   Object.entries(nodesMap).forEach(([nodeId, node]) => {
-    if (node.type === "answer" && Array.isArray(node.keywords)) {
+    if (Array.isArray(node.keywords)) {
       node.keywords.forEach((keyword) => {
         index.push({ nodeId, keyword });
       });

@@ -9,7 +9,16 @@ export default {
         { label: "信頼できるプールの見分け方", next: "spo-trust" },
         { label: "プールを選んだ後のこと", next: "spo-after" },
         { label: "非集中化・コミュニティ", next: "spo-community" },
+        { label: "健全性ランキング上位のプールを見る", next: "spo-recommend" },
       ],
+    },
+
+    "spo-recommend": {
+      type: "recommend-pool",
+      label: "健全性ランキング上位のプールを見る",
+      loadingText: "hfot.github.io/cardano-relay-health で健全性ランキングを確認しています…",
+      errorText: "現在ランキングを取得できませんでした。https://hfot.github.io/cardano-relay-health/ を直接確認してください。",
+      keywords: ["ランキング", "おすすめプール", "健全性"],
     },
 
     "spo-basics": {
