@@ -69,7 +69,7 @@ export default {
       type: "answer",
       label: "DRepを選ぶ基準は?",
       text: "過去の投票実績(実際にどれだけ投票に参加しているか)、投票理由の説明を公開しているか、自分の考え方(例えば開発重視、コミュニティ重視など)と近いか、といった点を基準にするのがおすすめです。有名だからという理由だけで選ばず、投票の中身や説明の透明性を見ることが大切です。",
-      keywords: ["選ぶ基準"],
+      keywords: ["選ぶ基準", "DRep選び", "DRepの選び方"],
     },
     "drep-choose-history": {
       type: "answer",
@@ -99,7 +99,7 @@ export default {
       type: "answer",
       label: "DRepへの委任手順は?",
       text: "GovToolにウォレットを接続し、委任したいDRepを検索して「Delegate」を実行するのが基本的な流れです。EternlなどウォレットによってはGovToolを経由せず、ウォレット内から直接DRep委任ができるものもあります。実行時には小さなネットワーク手数料がかかります。",
-      keywords: ["DRep委任", "GovTool"],
+      keywords: ["DRep委任", "GovTool", "委任手順"],
     },
     "drep-howto-change": {
       type: "answer",
@@ -117,7 +117,7 @@ export default {
       type: "answer",
       label: "DRep登録の保証金って何?",
       text: "自分自身をDRepとして登録する場合(委任される側になる場合)、SPOの登録と同じように一定の保証金(deposit)が必要です。この保証金は、DRep登録を取り消した際にADAとして手元に戻ってきます。他のDRepに委任するだけの場合は、この保証金は必要ありません。",
-      keywords: ["DRep保証金"],
+      keywords: ["DRep保証金", "DRep登録"],
     },
     "drep-howto-results": {
       type: "answer",

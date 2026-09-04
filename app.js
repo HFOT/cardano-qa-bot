@@ -185,6 +185,8 @@ function renderNode(nodeId, opts = {}) {
       });
     return;
   }
+
+  console.warn("[QA-BOT] unknown node type:", node.type, "for node:", nodeId);
 }
 
 function goBack() {
@@ -240,6 +242,7 @@ const RELAY_HEALTH_URL = "https://hfot.github.io/cardano-relay-health/";
 
 async function fetchRelayHealthPools() {
   const res = await fetch(RELAY_HEALTH_URL);
+  if (!res.ok) return null;
   const html = await res.text();
   const marker = "const data=";
   const markerIdx = html.indexOf(marker);
@@ -254,6 +257,7 @@ const DREP_TERMINAL_URL = "https://hfot.github.io/drep-terminal-v6/";
 
 async function fetchDrepTarget15Candidates() {
   const res = await fetch(DREP_TERMINAL_URL);
+  if (!res.ok) return null;
   const html = await res.text();
   const dbIdx = html.indexOf("const DB");
   if (dbIdx === -1) return null;
@@ -279,9 +283,9 @@ async function fetchDrepTarget15Candidates() {
   if (epochs.length === 0) return null;
   const latestEpoch = Math.max(...epochs);
   const totalVp = totalVpByEpoch[String(latestEpoch)];
-  if (!totalVp) return null;
+  if (typeof totalVp !== "number" || !(totalVp > 0)) return null;
   return dreps
-    .filter((d) => typeof d.latest_vp === "number" && d.latest_vp / totalVp < 0.015)
+    .filter((d) => typeof d.latest_vp === "number" && d.latest_vp > 0 && d.latest_vp / totalVp < 0.015)
     .map((d) => Object.assign({}, d, { sharePct: (d.latest_vp / totalVp) * 100 }));
 }
 
@@ -321,6 +325,21 @@ function matchKeywords(inputText) {
     .filter(([, count]) => count === maxCount)
     .map(([nodeId]) => nodeId);
 
+  if (bestNodeIds.length > 1) {
+    const longestByNode = bestNodeIds.map((nodeId) => {
+      const kws = matchedKeywordsByNode.get(nodeId);
+      return { nodeId, len: Math.max(...kws.map((k) => k.length)) };
+    });
+    const maxLen = Math.max(...longestByNode.map((e) => e.len));
+    const winners = longestByNode.filter((e) => e.len === maxLen);
+    if (winners.length === 1) {
+      const winId = winners[0].nodeId;
+      const kws = matchedKeywordsByNode.get(winId);
+      kws.sort((a, b) => b.length - a.length);
+      return { bestNodeIds: [winId], matchedKeywordsByNode };
+    }
+  }
+
   return { bestNodeIds, matchedKeywordsByNode };
 }
 
@@ -350,6 +369,7 @@ function handleFreeTextSubmit(text) {
       state.history.push(state.currentNodeId);
       renderNode(opt.next);
     });
+    renderNavButtons({ showBack: state.history.length > 0, showHome: true });
     return;
   }
 

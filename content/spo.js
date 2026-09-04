@@ -35,7 +35,7 @@ export default {
       type: "answer",
       label: "SPOとステーキングの関係は?",
       text: "SPO(Stake Pool Operator)は、ブロック生成用のサーバーを運営している人・組織のことです。私たちがADAをプールに委任すると、そのプールの取り分としてブロック生成に参加する権利が増え、生成された報酬が委任者にも分配されます。つまりSPO選びは「誰に運営を任せて報酬を分けてもらうか」を選ぶ作業です。",
-      keywords: ["SPO", "ステークプール"],
+      keywords: ["SPO", "ステークプール", "プール選び", "プールの選び方"],
     },
     "spo-basics-where": {
       type: "answer",

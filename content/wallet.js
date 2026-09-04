@@ -35,7 +35,7 @@ export default {
       type: "answer",
       label: "どのウォレットがいいの?",
       text: "初心者にはEternl、Nami、Yoroiなどのブラウザ拡張型(ライトウォレット)が扱いやすいです。スマホならEternlやYoroiのモバイル版もあります。どれもADAの送受金・ステーキング・DRep委任に対応しています。まずは1つ選んで少額のADAで操作に慣れるのがおすすめです。",
-      keywords: ["Eternl", "Nami", "Yoroi", "Daedalus", "選び方"],
+      keywords: ["Eternl", "Nami", "Yoroi", "Daedalus", "ウォレット選び", "ウォレットの選び方"],
     },
     "wallet-choose-lightnode": {
       type: "answer",
