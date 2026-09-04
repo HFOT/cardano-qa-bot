@@ -255,18 +255,29 @@ const DREP_TERMINAL_URL = "https://hfot.github.io/drep-terminal-v6/";
 async function fetchDrepTarget15Candidates() {
   const res = await fetch(DREP_TERMINAL_URL);
   const html = await res.text();
-  const marker = "const DB";
-  const markerIdx = html.indexOf(marker);
-  if (markerIdx === -1) return null;
-  const braceIdx = html.indexOf("{", markerIdx);
-  if (braceIdx === -1) return null;
-  const jsonText = extractBalancedJson(html, braceIdx, "{", "}");
-  if (!jsonText) return null;
-  const db = JSON.parse(jsonText);
+  const dbIdx = html.indexOf("const DB");
+  if (dbIdx === -1) return null;
+  const dbBrace = html.indexOf("{", dbIdx);
+  if (dbBrace === -1) return null;
+  const dbText = extractBalancedJson(html, dbBrace, "{", "}");
+  if (!dbText) return null;
+  const db = JSON.parse(dbText);
   const dreps = db.dreps;
-  const totalVpByEpoch = db.total_vp;
-  if (!Array.isArray(dreps) || !totalVpByEpoch) return null;
-  const latestEpoch = Math.max(...Object.keys(totalVpByEpoch).map(Number));
+  if (!Array.isArray(dreps)) return null;
+  // total_vp はページによって DB の外(別の const オブジェクト)にあるため、独立に探す
+  let totalVpByEpoch = db.total_vp;
+  if (!totalVpByEpoch) {
+    const tvIdx = html.indexOf('"total_vp":');
+    if (tvIdx === -1) return null;
+    const tvBrace = html.indexOf("{", tvIdx);
+    if (tvBrace === -1) return null;
+    const tvText = extractBalancedJson(html, tvBrace, "{", "}");
+    if (!tvText) return null;
+    totalVpByEpoch = JSON.parse(tvText);
+  }
+  const epochs = Object.keys(totalVpByEpoch).map(Number).filter((n) => !isNaN(n));
+  if (epochs.length === 0) return null;
+  const latestEpoch = Math.max(...epochs);
   const totalVp = totalVpByEpoch[String(latestEpoch)];
   if (!totalVp) return null;
   return dreps
