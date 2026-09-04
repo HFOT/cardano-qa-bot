@@ -243,7 +243,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: min(460px, 100%);
+  width: min(580px, 100%);
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -304,7 +304,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: min(460px, 100%);
+  width: min(580px, 100%);
 }
 
 #promo-apps .app {
