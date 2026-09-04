@@ -1,8 +1,9 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=15";
-import spoContent from "./content/spo.js?v=15";
-import drepContent from "./content/drep.js?v=15";
-import scamContent from "./content/scam.js?v=15";
+import walletContent from "./content/wallet.js?v=16";
+import spoContent from "./content/spo.js?v=16";
+import drepContent from "./content/drep.js?v=16";
+import scamContent from "./content/scam.js?v=16";
+import valueContent from "./content/value.js?v=16";
 
 const HOME_NODE_ID = "home";
 
@@ -14,6 +15,7 @@ const HOME_NODE = {
     { label: "SPO(プール)選びについて", next: "spo-root" },
     { label: "DRep選びについて", next: "drep-root" },
     { label: "詐欺の手口を知る", next: "scam-root" },
+    { label: "ADAの価値は上がるの?", next: "value-root" },
   ],
 };
 
@@ -23,7 +25,8 @@ function mergeNodes() {
     walletContent.nodes,
     spoContent.nodes,
     drepContent.nodes,
-    scamContent.nodes
+    scamContent.nodes,
+    valueContent.nodes
   );
 }
 
