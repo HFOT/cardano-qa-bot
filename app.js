@@ -1,9 +1,9 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=19";
-import spoContent from "./content/spo.js?v=19";
-import drepContent from "./content/drep.js?v=19";
-import scamContent from "./content/scam.js?v=19";
-import valueContent from "./content/value.js?v=19";
+import walletContent from "./content/wallet.js?v=20";
+import spoContent from "./content/spo.js?v=20";
+import drepContent from "./content/drep.js?v=20";
+import scamContent from "./content/scam.js?v=20";
+import valueContent from "./content/value.js?v=20";
 
 const HOME_NODE_ID = "home";
 
@@ -583,5 +583,36 @@ fetch(ADA_PRICE_URL)
   });
 
 amountEl.addEventListener("input", updateAdaTotal);
+
+// ---- ライト/ダーク手動切替(未設定時はOS設定に従う) ----
+const themeBtn = document.getElementById("theme-btn");
+
+function isEffectiveDark() {
+  const attr = document.documentElement.getAttribute("data-theme");
+  if (attr === "dark") return true;
+  if (attr === "light") return false;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+function updateThemeIcon() {
+  themeBtn.textContent = isEffectiveDark() ? "☀️" : "🌙";
+}
+
+try {
+  const saved = localStorage.getItem("wc_theme");
+  if (saved === "dark" || saved === "light") {
+    document.documentElement.setAttribute("data-theme", saved);
+  }
+} catch (e) {}
+updateThemeIcon();
+
+themeBtn.addEventListener("click", () => {
+  const next = isEffectiveDark() ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  try {
+    localStorage.setItem("wc_theme", next);
+  } catch (e) {}
+  updateThemeIcon();
+});
 
 renderNode(HOME_NODE_ID);

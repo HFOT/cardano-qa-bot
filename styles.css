@@ -30,7 +30,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #1c1c1e;
     --header-bg: rgba(28, 28, 30, 0.72);
     --panel: #2c2c2e;
@@ -54,6 +54,32 @@
     --chrome-bg-hover: rgba(120, 120, 128, 0.32);
     --chrome-bg-active: rgba(120, 120, 128, 0.4);
   }
+}
+
+/* 手動切替: data-theme="dark" はOS設定より優先 */
+:root[data-theme="dark"] {
+  --bg: #1c1c1e;
+  --header-bg: rgba(28, 28, 30, 0.72);
+  --panel: #2c2c2e;
+  --bot-bubble: #2c2c2e;
+  --bot-bubble-text: #f5f5f7;
+  --user-bubble-a: #0a84ff;
+  --user-bubble-b: #0060df;
+  --user-text: #ffffff;
+  --text: #f5f5f7;
+  --muted: #98989d;
+  --accent: #0a84ff;
+  --border: rgba(255, 255, 255, 0.12);
+  --hairline: rgba(255, 255, 255, 0.1);
+  --shadow-bubble: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-pill: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-pill-hover: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --focus-ring: 0 0 0 3px rgba(10, 132, 255, 0.35);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --chrome-text: #c7c7cc;
+  --chrome-bg: rgba(120, 120, 128, 0.24);
+  --chrome-bg-hover: rgba(120, 120, 128, 0.32);
+  --chrome-bg-active: rgba(120, 120, 128, 0.4);
 }
 
 * {
@@ -118,6 +144,39 @@ body {
 #chat-app:has(#chat-log > .bubble:nth-child(2)) #home-btn {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* ライト/ダーク手動切替(左上・常時表示) */
+#theme-btn {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  z-index: 30;
+  appearance: none;
+  background: var(--chrome-bg);
+  border: none;
+  color: var(--chrome-text);
+  border-radius: 9999px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+#theme-btn:hover {
+  background: var(--chrome-bg-hover);
+}
+
+#theme-btn:active {
+  transform: scale(0.92);
+  background: var(--chrome-bg-active);
 }
 
 #home-btn:hover {
