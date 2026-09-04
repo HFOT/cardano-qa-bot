@@ -1,6 +1,7 @@
 import walletContent from "./content/wallet.js";
 import spoContent from "./content/spo.js";
 import drepContent from "./content/drep.js";
+import scamContent from "./content/scam.js";
 
 const HOME_NODE_ID = "home";
 
@@ -11,6 +12,7 @@ const HOME_NODE = {
     { label: "ウォレット操作について", next: "wallet-root" },
     { label: "SPO(プール)選びについて", next: "spo-root" },
     { label: "DRep選びについて", next: "drep-root" },
+    { label: "詐欺の手口を知る", next: "scam-root" },
   ],
 };
 
@@ -19,7 +21,8 @@ function mergeNodes() {
     { [HOME_NODE_ID]: HOME_NODE },
     walletContent.nodes,
     spoContent.nodes,
-    drepContent.nodes
+    drepContent.nodes,
+    scamContent.nodes
   );
 }
 
@@ -38,12 +41,63 @@ const freeTextForm = document.getElementById("free-text-form");
 const freeTextInput = document.getElementById("free-text-input");
 const homeBtn = document.getElementById("home-btn");
 
-function appendBubble(text, sender) {
+// **強調** 記法だけを解釈する。DOM組み立てのみで innerHTML は使わない。
+function renderRichText(target, text) {
+  const parts = String(text).split("**");
+  parts.forEach((part, i) => {
+    if (!part) return;
+    if (i % 2 === 1) {
+      const em = document.createElement("strong");
+      em.className = "em";
+      em.textContent = part;
+      target.appendChild(em);
+    } else {
+      target.appendChild(document.createTextNode(part));
+    }
+  });
+}
+
+function appendBubble(content, sender) {
   const bubble = document.createElement("div");
   bubble.className = "bubble " + sender;
-  bubble.textContent = text;
+  if (content instanceof Node) {
+    bubble.classList.add("has-block");
+    bubble.appendChild(content);
+  } else {
+    renderRichText(bubble, content);
+  }
   chatLog.appendChild(bubble);
   chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+// 推薦結果の表。セルは textContent / DOM 組み立てのみ(リモートデータをinnerHTMLに通さない)。
+function buildRecommendTable(headers, rows) {
+  const wrap = document.createElement("div");
+  wrap.className = "tbl-wrap";
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  const trh = document.createElement("tr");
+  headers.forEach((h) => {
+    const th = document.createElement("th");
+    th.textContent = h;
+    trh.appendChild(th);
+  });
+  thead.appendChild(trh);
+  table.appendChild(thead);
+  const tbody = document.createElement("tbody");
+  rows.forEach((cells) => {
+    const tr = document.createElement("tr");
+    cells.forEach((c) => {
+      const td = document.createElement("td");
+      if (c instanceof Node) td.appendChild(c);
+      else td.textContent = c;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  return wrap;
 }
 
 function clearOptions() {
@@ -117,6 +171,24 @@ function renderNode(nodeId, opts = {}) {
 
   if (node.type === "answer") {
     appendBubble(node.text, "bot");
+    if (node.embed) {
+      const box = document.createElement("div");
+      box.className = "embed-box";
+      const frame = document.createElement("iframe");
+      frame.src = node.embed;
+      frame.loading = "lazy";
+      frame.referrerPolicy = "no-referrer";
+      frame.title = node.label || "embedded page";
+      const open = document.createElement("a");
+      open.href = node.embed;
+      open.target = "_blank";
+      open.rel = "noopener";
+      open.className = "embed-open";
+      open.textContent = "全画面で開く ↗";
+      box.appendChild(frame);
+      box.appendChild(open);
+      appendBubble(box, "bot");
+    }
     clearOptions();
     renderNavButtons({ showBack: state.history.length > 0, showHome: true });
     return;
@@ -133,16 +205,27 @@ function renderNode(nodeId, opts = {}) {
         const good = pools.filter((p) => typeof p.score === "number" && p.score >= 85);
         if (good.length === 0) throw new Error("no qualifying pools");
         const picked = pickRandomN(good, 5);
-        const lines = picked.map((p, i) => {
-          const ticker = p.ticker || "(Ticker未設定)";
+        appendBubble(
+          "健全性ランキング(hfot.github.io/cardano-relay-health)から**S・Aグレード**のプールを5件ランダムに紹介します:",
+          "bot"
+        );
+        const rows = picked.map((p) => {
+          const ticker = p.ticker || "(未設定)";
           const grade = p.score >= 95 ? "S" : "A";
+          const gradeCell = document.createElement("span");
+          gradeCell.className = grade === "S" ? "grade grade-s" : "grade grade-a";
+          gradeCell.textContent = `${grade} ${p.score}`;
           const marginPct = Math.round(p.margin * 1000) / 10;
-          const stakeText = Math.round(p.stake).toLocaleString();
-          return `${i + 1}. [${ticker}] ${grade}(${p.score}点) / ステーク${stakeText}₳ / 委任者${p.delegators}人 / 手数料${marginPct}%+${p.fixedAda}₳`;
+          return [
+            ticker,
+            gradeCell,
+            `${marginPct}% + ${p.fixedAda}₳`,
+            `${Math.round(p.stake).toLocaleString()}₳`,
+            `${p.delegators}人`,
+          ];
         });
         appendBubble(
-          "健全性ランキング(hfot.github.io/cardano-relay-health)からS・Aグレードのプールを5件ランダムに紹介します:\n\n" +
-            lines.join("\n"),
+          buildRecommendTable(["Ticker", "評価", "手数料", "ステーク", "委任者"], rows),
           "bot"
         );
         renderNavButtons({ showBack: state.history.length > 0, showHome: true });
@@ -164,16 +247,29 @@ function renderNode(nodeId, opts = {}) {
         if (seq !== recommendSeq || state.currentNodeId !== nodeId) return;
         if (!candidates || candidates.length === 0) throw new Error("empty");
         const picked = pickRandomN(candidates, 5);
-        const lines = picked.map((d, i) => {
-          const displayName = d.name || d.id;
+        appendBubble(
+          "TARGET15(上位10 DRepへの集中を避ける思想)に沿って、投票力**1.5%未満**のDRepを5件ランダムに紹介します:",
+          "bot"
+        );
+        const rows = picked.map((d) => {
+          const nameCell = document.createElement("div");
+          const nameLine = document.createElement("div");
+          nameLine.className = "drep-name";
+          nameLine.textContent = d.name || "(名前未登録)";
+          const idLine = document.createElement("div");
+          idLine.className = "drep-id";
+          idLine.textContent = d.id;
+          nameCell.appendChild(nameLine);
+          nameCell.appendChild(idLine);
           const vpAda = Math.round(d.latest_vp * 1_000_000).toLocaleString();
-          const sharePct = d.sharePct.toFixed(2);
-          return `${i + 1}. ${displayName}(#${d.rank}) / 投票力${vpAda}₳(全体の${sharePct}%) / ${d.id}`;
+          return [nameCell, `#${d.rank}`, `${vpAda}₳`, `${d.sharePct.toFixed(2)}%`];
         });
         appendBubble(
-          "TARGET15(上位10 DRepへの集中を避ける思想)に沿って、投票力1.5%未満のDRepを5件ランダムに紹介します:\n\n" +
-            lines.join("\n") +
-            "\n\n委任前に各DRepの最新の投票実績をGovTool(https://gov.tools)で確認してください。",
+          buildRecommendTable(["DRep", "順位", "投票力", "シェア"], rows),
+          "bot"
+        );
+        appendBubble(
+          "委任前に各DRepの最新の投票実績をGovTool(https://gov.tools)で確認してください。",
           "bot"
         );
         renderNavButtons({ showBack: state.history.length > 0, showHome: true });

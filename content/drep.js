@@ -40,8 +40,9 @@ export default {
     "drep-basics-vs-spo": {
       type: "answer",
       label: "DRepとSPOへの委任は別物?",
-      text: "はい、まったく別の委任です。SPOへの委任は「ステーキング報酬」のため、DRepへの委任は「ガバナンス投票権」のためのものです。1つのウォレットから両方に別々に委任することができ、片方だけ設定してもう片方は未設定、という状態も可能です。",
-      keywords: ["2つの委任"],
+      text: "はい、まったく別の委任です。SPOへの委任は**「ステーキング報酬」**のため、DRepへの委任は**「ガバナンス投票権」**のためのものです。1つのウォレットから両方に別々に委任することができ、片方だけ設定してもう片方は未設定、という状態も可能です。\n\n下のミニブラウザで、2つの委任の関係を図解したページをそのまま見られます:",
+      embed: "https://hfot.github.io/cardano-two-delegations/",
+      keywords: ["2つの委任", "違い"],
     },
     "drep-basics-noaction": {
       type: "answer",

@@ -1,11 +1,12 @@
 # What's Cardano?
 
-Cardano初心者向けに、ウォレット操作・SPO(プール)選び・DRep選びの3トピックを
+Cardano初心者向けに、ウォレット操作・SPO(プール)選び・DRep選び・詐欺の手口の4トピックを
 チャット形式(ボタン選択+自由文入力)で案内する、完全静的なQ&Aボットです。
 AI APIは使用していません。回答内容はすべて `content/*.js` に決定木として記述されています。
 
-全体で96ノード(選択肢20 + 回答74 + 推薦2)。ウォレット39ノード(7カテゴリ)、
-SPO選び31ノード(5カテゴリ+リレー健全性ランキング連携)、DRep選び26ノード(5カテゴリ+TARGET15連携)。
+全体で105ノード(選択肢21 + 回答82 + 推薦2)。ウォレット39ノード(7カテゴリ)、
+SPO選び31ノード(5カテゴリ+リレー健全性ランキング連携)、DRep選び26ノード(5カテゴリ+TARGET15連携)、
+詐欺の手口9ノード(実際にあった8つの手口)。
 
 SPO推薦とDRep推薦の2機能だけは例外的に外部サイトへ読み取り専用のfetchを行う
 (`hfot.github.io/cardano-relay-health` と `hfot.github.io/drep-terminal-v6`。
@@ -32,7 +33,9 @@ python -m http.server 8000
 
 ## コンテンツの追加・編集
 
-- 既存トピックの回答を直接編集する場合は `content/wallet.js` / `content/spo.js` / `content/drep.js` を編集する
+- 既存トピックの回答を直接編集する場合は `content/wallet.js` / `content/spo.js` / `content/drep.js` / `content/scam.js` を編集する
+- 回答文の中では `**強調したい語**` の記法が使え、アクセント色の太字で表示される(実装はDOM組み立てのみで`innerHTML`不使用)
+- answerノードに `embed: "https://..."` を付けると、回答の下にそのページをミニブラウザ(iframe)として埋め込める(埋め込み先がX-Frame-Options等でブロックしていないこと)
 - 新しいトピックを追加する場合:
   1. `content/<topic>.js` を作成し、`export default { nodes: { "<topic>-root": {...}, ... } }` の形で決定木を書く
   2. `app.js` の先頭で `import <topic>Content from "./content/<topic>.js";` を追加する
