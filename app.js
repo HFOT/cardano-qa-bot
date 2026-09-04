@@ -138,6 +138,54 @@ function renderNavButtons({ showBack, showHome }) {
   chatOptions.appendChild(wrap);
 }
 
+// ミニブラウザ(iframe埋め込み)。answerノードのembedと推薦結果の両方で使う。
+// 同じURLはセッション中1回だけ埋め込む(重いページを更新ボタンのたびに増殖させない)。
+const embeddedUrls = new Set();
+
+function appendEmbed(url, title, opts = {}) {
+  if (opts.once && embeddedUrls.has(url)) return;
+  embeddedUrls.add(url);
+  const box = document.createElement("div");
+  box.className = "embed-box";
+  const viewport = document.createElement("div");
+  viewport.className = "embed-viewport";
+  const frame = document.createElement("iframe");
+  frame.src = url;
+  frame.loading = "lazy";
+  frame.referrerPolicy = "no-referrer";
+  frame.title = title || "embedded page";
+  const open = document.createElement("a");
+  open.href = url;
+  open.target = "_blank";
+  open.rel = "noopener";
+  open.className = "embed-open";
+  open.textContent = "全画面で開く ↗";
+  viewport.appendChild(frame);
+  box.appendChild(viewport);
+  box.appendChild(open);
+  appendBubble(box, "bot");
+  // 埋め込み先はPC幅想定のページが多いので、仮想幅で描画して丸ごと縮小表示する
+  // (右側が切れるのを防ぐ。少し小さく見えるのは仕様)
+  const VIRTUAL_W = 1080;
+  const visibleW = viewport.clientWidth;
+  const visibleH = viewport.clientHeight;
+  if (visibleW > 0 && visibleW < VIRTUAL_W) {
+    const scale = visibleW / VIRTUAL_W;
+    frame.style.width = VIRTUAL_W + "px";
+    frame.style.height = Math.round(visibleH / scale) + "px";
+    frame.style.transform = "scale(" + scale + ")";
+  }
+}
+
+// 「他の5件を見る」ボタン + ナビの共通描画
+function renderRerollAndNav(nodeId, label) {
+  renderOptionButtons([{ label: label, next: nodeId }], (opt) => {
+    appendBubble(opt.label, "user");
+    renderNode(nodeId);
+  });
+  renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+}
+
 function renderNode(nodeId, opts = {}) {
   const node = nodes[nodeId];
   if (!node) {
@@ -172,36 +220,7 @@ function renderNode(nodeId, opts = {}) {
   if (node.type === "answer") {
     appendBubble(node.text, "bot");
     if (node.embed) {
-      const box = document.createElement("div");
-      box.className = "embed-box";
-      const viewport = document.createElement("div");
-      viewport.className = "embed-viewport";
-      const frame = document.createElement("iframe");
-      frame.src = node.embed;
-      frame.loading = "lazy";
-      frame.referrerPolicy = "no-referrer";
-      frame.title = node.label || "embedded page";
-      const open = document.createElement("a");
-      open.href = node.embed;
-      open.target = "_blank";
-      open.rel = "noopener";
-      open.className = "embed-open";
-      open.textContent = "全画面で開く ↗";
-      viewport.appendChild(frame);
-      box.appendChild(viewport);
-      box.appendChild(open);
-      appendBubble(box, "bot");
-      // 埋め込み先はPC幅想定のページが多いので、仮想幅で描画して丸ごと縮小表示する
-      // (右側が切れるのを防ぐ。少し小さく見えるのは仕様)
-      const VIRTUAL_W = 1080;
-      const visibleW = viewport.clientWidth;
-      const visibleH = viewport.clientHeight;
-      if (visibleW > 0 && visibleW < VIRTUAL_W) {
-        const scale = visibleW / VIRTUAL_W;
-        frame.style.width = VIRTUAL_W + "px";
-        frame.style.height = Math.round(visibleH / scale) + "px";
-        frame.style.transform = "scale(" + scale + ")";
-      }
+      appendEmbed(node.embed, node.label);
     }
     clearOptions();
     renderNavButtons({ showBack: state.history.length > 0, showHome: true });
@@ -216,7 +235,13 @@ function renderNode(nodeId, opts = {}) {
       .then((pools) => {
         if (seq !== recommendSeq || state.currentNodeId !== nodeId) return;
         if (!pools || pools.length === 0) throw new Error("empty");
-        const good = pools.filter((p) => typeof p.score === "number" && p.score >= 85);
+        const good = pools.filter(
+          (p) =>
+            typeof p.score === "number" &&
+            p.score >= 85 &&
+            p.ticker &&
+            p.ticker !== "N/A"
+        );
         if (good.length === 0) throw new Error("no qualifying pools");
         const picked = pickRandomN(good, 5);
         appendBubble(
@@ -224,7 +249,7 @@ function renderNode(nodeId, opts = {}) {
           "bot"
         );
         const rows = picked.map((p) => {
-          const ticker = p.ticker || "(未設定)";
+          const ticker = p.ticker;
           const grade = p.score >= 95 ? "S" : "A";
           const gradeCell = document.createElement("span");
           gradeCell.className = grade === "S" ? "grade grade-s" : "grade grade-a";
@@ -242,7 +267,8 @@ function renderNode(nodeId, opts = {}) {
           buildRecommendTable(["Ticker", "評価", "手数料", "ステーク", "委任者"], rows),
           "bot"
         );
-        renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+        appendEmbed(RELAY_HEALTH_URL, "Relay Health Ranking", { once: true });
+        renderRerollAndNav(nodeId, "🔄 他の5件を見る");
       })
       .catch(() => {
         if (seq !== recommendSeq || state.currentNodeId !== nodeId) return;
@@ -286,7 +312,7 @@ function renderNode(nodeId, opts = {}) {
           "委任前に各DRepの最新の投票実績をGovTool(https://gov.tools)で確認してください。",
           "bot"
         );
-        renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+        renderRerollAndNav(nodeId, "🔄 他のDRepを見る");
       })
       .catch(() => {
         if (seq !== recommendSeq || state.currentNodeId !== nodeId) return;
@@ -350,7 +376,10 @@ function extractBalancedJson(text, startIdx, openChar, closeChar) {
 
 const RELAY_HEALTH_URL = "https://hfot.github.io/cardano-relay-health/";
 
+let _poolsCache = null;
+
 async function fetchRelayHealthPools() {
+  if (_poolsCache) return _poolsCache;
   const res = await fetch(RELAY_HEALTH_URL);
   if (!res.ok) return null;
   const html = await res.text();
@@ -360,12 +389,16 @@ async function fetchRelayHealthPools() {
   const arrStart = markerIdx + marker.length;
   const jsonText = extractBalancedJson(html, arrStart, "[", "]");
   if (!jsonText) return null;
-  return JSON.parse(jsonText);
+  _poolsCache = JSON.parse(jsonText);
+  return _poolsCache;
 }
 
 const DREP_TERMINAL_URL = "https://hfot.github.io/drep-terminal-v6/";
 
+let _drepCache = null;
+
 async function fetchDrepTarget15Candidates() {
+  if (_drepCache) return _drepCache;
   const res = await fetch(DREP_TERMINAL_URL);
   if (!res.ok) return null;
   const html = await res.text();
@@ -394,9 +427,10 @@ async function fetchDrepTarget15Candidates() {
   const latestEpoch = Math.max(...epochs);
   const totalVp = totalVpByEpoch[String(latestEpoch)];
   if (typeof totalVp !== "number" || !(totalVp > 0)) return null;
-  return dreps
+  _drepCache = dreps
     .filter((d) => typeof d.latest_vp === "number" && d.latest_vp > 0 && d.latest_vp / totalVp < 0.015)
     .map((d) => Object.assign({}, d, { sharePct: (d.latest_vp / totalVp) * 100 }));
+  return _drepCache;
 }
 
 function buildKeywordIndex(nodesMap) {
