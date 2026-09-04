@@ -1,9 +1,9 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=21";
-import spoContent from "./content/spo.js?v=21";
-import drepContent from "./content/drep.js?v=21";
-import scamContent from "./content/scam.js?v=21";
-import valueContent from "./content/value.js?v=21";
+import walletContent from "./content/wallet.js?v=22";
+import spoContent from "./content/spo.js?v=22";
+import drepContent from "./content/drep.js?v=22";
+import scamContent from "./content/scam.js?v=22";
+import valueContent from "./content/value.js?v=22";
 
 const HOME_NODE_ID = "home";
 
@@ -521,13 +521,27 @@ function handleFreeTextSubmit(text) {
     return;
   }
 
-  appendBubble("うまく聞き取れませんでした。下の選択肢から選んでください。", "bot");
-  const fallbackNode = nodes[state.currentNodeId];
-  if (fallbackNode && fallbackNode.type === "choice") {
-    renderNode(state.currentNodeId);
-  } else {
-    goHome();
-  }
+  // ノーヒット: 行き止まりにせず、反応できる言葉の実例をボタンで提示する
+  appendBubble(
+    "うまく聞き取れませんでした。例えば、こんな言葉に反応できます:",
+    "bot"
+  );
+  const suggestions = [
+    { label: "シードフレーズ", next: "wallet-security-seed" },
+    { label: "送金のやり方", next: "wallet-basic-send" },
+    { label: "ステーキングとは", next: "wallet-staking-what" },
+    { label: "プールの選び方", next: "spo-trust" },
+    { label: "DRepとは", next: "drep-basics-what" },
+    { label: "詐欺の手口", next: "scam-root" },
+    { label: "ADAの価格", next: "value-root" },
+    { label: "報酬はどうなる?", next: "value-rewards" },
+  ];
+  renderOptionButtons(suggestions, (opt) => {
+    appendBubble(opt.label, "user");
+    state.history.push(state.currentNodeId);
+    renderNode(opt.next);
+  });
+  renderNavButtons({ showBack: state.history.length > 0, showHome: true });
 }
 
 freeTextForm.addEventListener("submit", (e) => {
