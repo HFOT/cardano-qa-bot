@@ -7,17 +7,19 @@
 <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <title>What's Cardano?</title>
-<link rel="stylesheet" href="styles.css?v=13">
+<link rel="stylesheet" href="styles.css?v=14">
 </head>
 <body>
   <div id="chat-app">
-    <header id="chat-header">
-      <h1>What's Cardano?</h1>
-      <button id="home-btn" type="button">トップに戻る</button>
-    </header>
+    <button id="home-btn" type="button">トップに戻る</button>
     <section id="hero">
       <h2 id="hero-title">What's Cardano?</h2>
-      <p id="hero-subtitle">はじめての方でも大丈夫。ウォレットからDRep投票まで、知りたいことをやさしく道案内します。</p>
+      <div id="hero-feed">
+        <div class="feed-track">
+          <span class="feed-item">はじめての方でも大丈夫。ウォレットからDRep投票まで、知りたいことをやさしく道案内します。押して進むだけのCardano Q&amp;Aボットです。</span>
+          <span class="feed-item" aria-hidden="true">はじめての方でも大丈夫。ウォレットからDRep投票まで、知りたいことをやさしく道案内します。押して進むだけのCardano Q&amp;Aボットです。</span>
+        </div>
+      </div>
     </section>
     <section id="promo">
       <a id="promo-head" href="https://hfot.github.io/holders-governance-skill/" target="_blank" rel="noopener">
@@ -76,6 +78,6 @@
       <button type="submit">送信</button>
     </form>
   </div>
-  <script type="module" src="app.js?v=13"></script>
+  <script type="module" src="app.js?v=14"></script>
 </body>
 </html>
