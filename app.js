@@ -165,7 +165,7 @@ function renderNode(nodeId, opts = {}) {
         if (!candidates || candidates.length === 0) throw new Error("empty");
         const picked = pickRandomN(candidates, 5);
         const lines = picked.map((d, i) => {
-          const displayName = d.name_ja || d.name || d.id;
+          const displayName = d.name || d.id;
           const vpAda = Math.round(d.latest_vp * 1_000_000).toLocaleString();
           const sharePct = d.sharePct.toFixed(2);
           return `${i + 1}. ${displayName}(#${d.rank}) / 投票力${vpAda}₳(全体の${sharePct}%) / ${d.id}`;
