@@ -1794,3 +1794,47 @@ git commit -m "docs: add README and gitignore"
 git add styles.css index.html
 git commit -m "style: Apple/iMessage-inspired visual redesign"
 ```
+
+---
+
+### Task 11: 起動画面(ヒーロー)+ デザイン最終ブラッシュアップ
+
+ユーザー要望(2026-09-04): 「デザインをもう少しかっこよくして終了。初めの起動画面だけしっかり作ろう」。
+
+**Files:**
+- Modify: `index.html`(chat-logの直前にヒーローセクションを静的に追加)
+- Modify: `styles.css`(ヒーローのスタイル+全体ポリッシュ)
+
+**Interfaces:**
+- 制約は Task 10 と同一: **app.jsは1文字も変更しない**。既存のid/class/DOM構造は不変(要素の追加は可、既存要素の変更・削除は不可)。外部リソース禁止(フォント/画像CDN不可。ロゴ等はインラインSVGで作る)。
+- ヒーローの表示制御はJSを使わず、CSSの`:has()`で行う: 会話が進んだら(=chat-logのバブルが2個以上になったら)ヒーローを畳む。例: `#chat-app:has(#chat-log > .bubble:nth-child(2)) #hero { ... 縮小/非表示 ... }`。`:has()`非対応ブラウザではヒーローが出続けるだけで機能は壊れない(グレースフルデグラデーション)。
+
+**デザイン方向**:
+
+- [ ] **Step 1: index.htmlにヒーローセクションを追加**
+
+`<div id="chat-log">`の直前に静的な`<section id="hero">`を追加:
+1. インラインSVGのロゴマーク(Cardanoを想起させる幾何学マーク — 円環+ノードのドット等。著作権のある公式ロゴの複製はしない。オリジナルの抽象マークにする)
+2. タイトル「Cardano Q&A」+ サブタイトル(1行、初心者向けであることが伝わる文)
+3. 3つの特徴チップ(ウォレット / プール選び / DRep選び)— 装飾のみ、クリック不要(実操作は下の選択肢ボタンで行う)
+
+- [ ] **Step 2: styles.cssでヒーロー+全体ポリッシュ**
+
+1. ヒーロー: 中央寄せ、ロゴにゆっくりした浮遊/呼吸アニメーション(prefers-reduced-motion対応)、タイトルは大きめのletter-spacingを絞った見出し、アクセントのグラデーションテキスト(iOSブルー系)
+2. 会話開始後: `:has()`でヒーローをスムーズに縮小(max-height+opacity+transformのtransition)
+3. 全体ポリッシュ: ボタン/入力への`:focus-visible`リング統一(--focus-ring使用、Task 10レビューの残課題を解消)、微細な影・余白の調整
+4. ダークモードでも成立する配色
+
+- [ ] **Step 3: 検証**
+
+- ライト/ダーク両方でヒーローの見た目確認
+- 選択肢クリックで会話が進んだらヒーローが畳まれること
+- トップに戻る(会話リセット)でヒーローが再表示されること(chat-logが1バブルに戻るため:has()条件が外れる)
+- 全機能が引き続き動作、コンソールエラーなし、375pxで崩れない
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add index.html styles.css
+git commit -m "style: hero startup screen + design polish"
+```
