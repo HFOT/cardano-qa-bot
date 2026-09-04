@@ -1,11 +1,11 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=26";
-import spoContent from "./content/spo.js?v=26";
-import drepContent from "./content/drep.js?v=26";
-import scamContent from "./content/scam.js?v=26";
-import valueContent from "./content/value.js?v=26";
-import midnightContent from "./content/midnight.js?v=26";
-import gameContent from "./content/game.js?v=26";
+import walletContent from "./content/wallet.js?v=27";
+import spoContent from "./content/spo.js?v=27";
+import drepContent from "./content/drep.js?v=27";
+import scamContent from "./content/scam.js?v=27";
+import valueContent from "./content/value.js?v=27";
+import midnightContent from "./content/midnight.js?v=27";
+import gameContent from "./content/game.js?v=27";
 
 const HOME_NODE_ID = "home";
 
@@ -254,20 +254,72 @@ function buildSlotMachine(getCandidates, reelText, buildResult, errorText) {
 
 // ---- ⚔️ SPOカードバトル(トップトランプ方式・3ラウンド) ----
 const BATTLE_STATS = [
-  { key: "score", label: "健全性", fmt: (v) => v + "点", higherWins: true },
-  { key: "stake", label: "ステーク", fmt: (v) => Math.round(v / 1000).toLocaleString() + "k₳", higherWins: true },
-  { key: "delegators", label: "委任者", fmt: (v) => v + "人", higherWins: true },
-  { key: "margin", label: "手数料(低が勝ち)", fmt: (v) => Math.round(v * 1000) / 10 + "%", higherWins: false },
-  { key: "rtt", label: "応答速度(低が勝ち)", fmt: (v) => Math.round(v) + "ms", higherWins: false },
+  { key: "score", label: "健全性", fmt: (v) => v + "点", higherWins: true, meter: (v) => v / 100 },
+  { key: "stake", label: "ステーク", fmt: (v) => Math.round(v / 1000).toLocaleString() + "k₳", higherWins: true, meter: (v) => Math.min(v / 60000000, 1) },
+  { key: "delegators", label: "委任者", fmt: (v) => v + "人", higherWins: true, meter: (v) => Math.min(v / 1500, 1) },
+  { key: "margin", label: "手数料 ↓", fmt: (v) => Math.round(v * 1000) / 10 + "%", higherWins: false, meter: (v) => 1 - Math.min(v / 0.05, 1) },
+  { key: "rtt", label: "応答速度 ↓", fmt: (v) => Math.round(v) + "ms", higherWins: false, meter: (v) => 1 - Math.min(v / 300, 1) },
 ];
+
+function tickerHue(ticker) {
+  let h = 7;
+  for (let i = 0; i < ticker.length; i++) h = (h * 31 + ticker.charCodeAt(i)) % 3600;
+  return h % 360;
+}
+
+function poolRarity(pool) {
+  if (pool.score >= 95) return { cls: "rarity-s", label: "★ LEGEND" };
+  if (pool.score >= 85) return { cls: "rarity-a", label: "◆ EPIC" };
+  return { cls: "rarity-b", label: "● RARE" };
+}
 
 function buildBattleCard(pool, { faceDown, onPickStat }) {
   const card = document.createElement("div");
-  card.className = "battle-card" + (faceDown ? " face-down" : "");
-  const name = document.createElement("div");
-  name.className = "battle-card-name";
-  name.textContent = faceDown ? "???" : "[" + pool.ticker + "]";
-  card.appendChild(name);
+  if (faceDown) {
+    card.className = "battle-card face-down";
+    const back = document.createElement("div");
+    back.className = "card-back";
+    const mark = document.createElement("span");
+    mark.textContent = "₳";
+    back.appendChild(mark);
+    card.appendChild(back);
+    return card;
+  }
+
+  const rarity = poolRarity(pool);
+  card.className = "battle-card card-reveal " + rarity.cls;
+  const hue = tickerHue(pool.ticker);
+
+  // ヘッダー: レアリティ + ticker
+  const head = document.createElement("div");
+  head.className = "card-head";
+  const rarityEl = document.createElement("span");
+  rarityEl.className = "card-rarity";
+  rarityEl.textContent = rarity.label;
+  const nameEl = document.createElement("span");
+  nameEl.className = "card-name";
+  nameEl.textContent = pool.ticker;
+  head.appendChild(rarityEl);
+  head.appendChild(nameEl);
+  card.appendChild(head);
+
+  // アート面: tickerから生成される固有の紋章
+  const art = document.createElement("div");
+  art.className = "card-art";
+  art.style.background =
+    `radial-gradient(circle at 30% 30%, hsl(${hue}, 85%, 62%), transparent 55%),` +
+    `radial-gradient(circle at 72% 65%, hsl(${(hue + 60) % 360}, 80%, 55%), transparent 52%),` +
+    `radial-gradient(circle at 50% 90%, hsl(${(hue + 200) % 360}, 75%, 45%), transparent 60%),` +
+    `hsl(${hue}, 45%, 16%)`;
+  const emblem = document.createElement("span");
+  emblem.className = "card-emblem";
+  emblem.textContent = pool.ticker.slice(0, 2);
+  art.appendChild(emblem);
+  card.appendChild(art);
+
+  // 能力: メーターバー付き
+  const stats = document.createElement("div");
+  stats.className = "card-stats";
   BATTLE_STATS.forEach((stat, idx) => {
     const row = document.createElement(onPickStat ? "button" : "div");
     if (onPickStat) {
@@ -276,16 +328,27 @@ function buildBattleCard(pool, { faceDown, onPickStat }) {
     }
     row.className = "battle-stat";
     row.dataset.statIdx = String(idx);
+    const top = document.createElement("span");
+    top.className = "battle-stat-top";
     const lb = document.createElement("span");
     lb.className = "battle-stat-label";
     lb.textContent = stat.label;
     const val = document.createElement("span");
     val.className = "battle-stat-value";
-    val.textContent = faceDown ? "?" : stat.fmt(pool[stat.key]);
-    row.appendChild(lb);
-    row.appendChild(val);
-    card.appendChild(row);
+    val.textContent = stat.fmt(pool[stat.key]);
+    top.appendChild(lb);
+    top.appendChild(val);
+    const meter = document.createElement("span");
+    meter.className = "battle-meter";
+    const fill = document.createElement("span");
+    fill.className = "battle-meter-fill";
+    fill.style.width = Math.round(Math.max(0.04, Math.min(stat.meter(pool[stat.key]), 1)) * 100) + "%";
+    meter.appendChild(fill);
+    row.appendChild(top);
+    row.appendChild(meter);
+    stats.appendChild(row);
   });
+  card.appendChild(stats);
   return card;
 }
 

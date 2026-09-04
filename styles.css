@@ -1063,30 +1063,152 @@ body {
   justify-content: center;
 }
 
+/* トレーディングカード風 */
 .battle-card {
+  position: relative;
   flex: 1;
-  max-width: 220px;
+  max-width: 224px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--bg);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* レアリティ枠(グラデーションボーダー) */
+.battle-card::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  border-radius: 16px;
+}
+
+.rarity-s {
+  border-color: #d4a017;
+  box-shadow: 0 6px 20px rgba(212, 160, 23, 0.35);
+}
+
+.rarity-a {
+  border-color: #8b6cff;
+  box-shadow: 0 6px 20px rgba(139, 108, 255, 0.3);
+}
+
+.rarity-b {
+  border-color: #3d7bff;
+  box-shadow: 0 6px 18px rgba(61, 123, 255, 0.25);
+}
+
+/* ホロ光沢: 登場時に一度走る */
+.card-reveal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.35) 48%,
+    rgba(255, 255, 255, 0.08) 52%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: card-shine 0.9s ease-out 0.15s forwards;
+  pointer-events: none;
+}
+
+@keyframes card-shine {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+.card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 4px 0;
+}
+
+.card-rarity {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.rarity-s .card-rarity {
+  color: #d4a017;
+}
+
+.rarity-a .card-rarity {
+  color: #8b6cff;
+}
+
+.rarity-b .card-rarity {
+  color: #3d7bff;
+}
+
+.card-name {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+/* アート面(Tickerから生成される固有の紋章) */
+.card-art {
+  position: relative;
+  height: 74px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.card-emblem {
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+/* カード裏面 */
+.battle-card.face-down {
+  border-color: var(--border);
+  padding: 0;
+}
+
+.card-back {
+  flex: 1;
+  min-height: 228px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0 8px, transparent 8px 16px),
+    linear-gradient(160deg, #1b2340, #0d1020);
+  border-radius: 12px;
+}
+
+.card-back span {
+  font-size: 44px;
+  font-weight: 900;
+  color: rgba(120, 150, 255, 0.5);
+  text-shadow: 0 0 24px rgba(80, 120, 255, 0.5);
+}
+
+/* 能力メーター */
+.card-stats {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px;
-  border: 2px solid var(--accent);
-  border-radius: 14px;
-  background: var(--bg);
-}
-
-.battle-card.face-down {
-  border-color: var(--border);
-  opacity: 0.85;
-}
-
-.battle-card-name {
-  text-align: center;
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text);
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--hairline);
 }
 
 .battle-stat {
@@ -1094,41 +1216,72 @@ body {
   border: 1px solid var(--border);
   background: var(--panel);
   border-radius: 8px;
-  padding: 5px 8px;
+  padding: 4px 8px 5px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 3px;
   font-size: 10.5px;
   color: var(--text);
   text-align: left;
   width: 100%;
 }
 
+.battle-stat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
 button.battle-stat {
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.12s ease;
 }
 
 button.battle-stat:hover {
   border-color: var(--accent);
   background: var(--chrome-bg);
+  transform: translateX(2px);
 }
 
 .battle-stat-label {
   color: var(--muted);
   font-size: 9.5px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .battle-stat-value {
-  font-weight: 700;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.battle-meter {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--chrome-bg);
+  overflow: hidden;
+}
+
+.battle-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--user-bubble-a), #21d4c2);
 }
 
 .battle-stat-active {
   border-color: var(--accent);
   background: rgba(10, 132, 255, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-reveal::after {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 .battle-verdict {
