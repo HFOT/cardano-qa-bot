@@ -1,11 +1,11 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=27";
-import spoContent from "./content/spo.js?v=27";
-import drepContent from "./content/drep.js?v=27";
-import scamContent from "./content/scam.js?v=27";
-import valueContent from "./content/value.js?v=27";
-import midnightContent from "./content/midnight.js?v=27";
-import gameContent from "./content/game.js?v=27";
+import walletContent from "./content/wallet.js?v=28";
+import spoContent from "./content/spo.js?v=28";
+import drepContent from "./content/drep.js?v=28";
+import scamContent from "./content/scam.js?v=28";
+import valueContent from "./content/value.js?v=28";
+import midnightContent from "./content/midnight.js?v=28";
+import gameContent from "./content/game.js?v=28";
 
 const HOME_NODE_ID = "home";
 
@@ -187,16 +187,48 @@ function appendEmbed(url, title, opts = {}) {
   }
 }
 
-// ---- 🎰 スロットマシン ----
-// getCandidates: () => Promise<array|null>
-// reelText: (item) => リールに流す短い文字列
-// buildResult: (item) => 当選表示のDOM
-function buildSlotMachine(getCandidates, reelText, buildResult, errorText) {
+// ---- 🎰 スロットマシン(3リール・本物の当たり外れ・金貨シャワー) ----
+// リールにはターゲット(プール/DRep)のほか、スキャム・ラグ・DAppsなどが混ざる。
+// ターゲットは必ず1つは出るが、3つ揃うとは限らない。揃ったときだけ実在の1件が開示される。
+const SLOT_FILLERS = ["🎣", "🧻", "📱", "₳", "⭐"];
+const SLOT_MISS_LINES = [
+  "はずれ! でも₳は1枚も減っていないのでご安心を。",
+  "うーん、噛み合わない。もう一回!",
+  "リールの神は気まぐれ。次いこう次!",
+];
+
+function coinShower(container, count) {
+  for (let i = 0; i < count; i++) {
+    const coin = document.createElement("span");
+    coin.className = "slot-coin";
+    coin.textContent = "₳";
+    coin.style.left = Math.random() * 92 + 4 + "%";
+    coin.style.animationDelay = Math.random() * 0.7 + "s";
+    coin.style.fontSize = 12 + Math.random() * 12 + "px";
+    container.appendChild(coin);
+    setTimeout(() => coin.remove(), 2400);
+  }
+}
+
+// config: { getCandidates, target, targetName, reelText, buildResult, errorText }
+// target = ターゲットシンボル(例 "🗳️")
+function buildSlotMachine(config) {
   const box = document.createElement("div");
   box.className = "slot-machine";
-  const windowEl = document.createElement("div");
-  windowEl.className = "slot-window";
-  windowEl.textContent = "— READY —";
+  const legendEl = document.createElement("div");
+  legendEl.className = "slot-legend";
+  legendEl.textContent = config.target + "×3で大当たり! " + config.targetName + "は毎回どこかに必ずいます";
+  const reelsWrap = document.createElement("div");
+  reelsWrap.className = "slot-reels";
+  const reels = [0, 1, 2].map(() => {
+    const r = document.createElement("div");
+    r.className = "slot-reel";
+    r.textContent = "?";
+    reelsWrap.appendChild(r);
+    return r;
+  });
+  const nameEl = document.createElement("div");
+  nameEl.className = "slot-name";
   const spinBtn = document.createElement("button");
   spinBtn.type = "button";
   spinBtn.className = "slot-spin-btn";
@@ -206,46 +238,108 @@ function buildSlotMachine(getCandidates, reelText, buildResult, errorText) {
   const noteEl = document.createElement("div");
   noteEl.className = "slot-note";
   noteEl.textContent = "※遊びです。委任の推奨ではありません。";
-  box.appendChild(windowEl);
+  box.appendChild(legendEl);
+  box.appendChild(reelsWrap);
+  box.appendChild(nameEl);
   box.appendChild(spinBtn);
   box.appendChild(resultEl);
   box.appendChild(noteEl);
+
+  // 出目を作る: ターゲット1つは保証、残りは確率で決まる
+  function rollOutcome() {
+    const symbols = [config.target, null, null];
+    for (let i = 1; i < 3; i++) {
+      symbols[i] =
+        Math.random() < 0.38
+          ? config.target
+          : SLOT_FILLERS[Math.floor(Math.random() * SLOT_FILLERS.length)];
+    }
+    // ターゲット保証枠の位置をシャッフル
+    for (let i = symbols.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = symbols[i];
+      symbols[i] = symbols[j];
+      symbols[j] = t;
+    }
+    return symbols;
+  }
 
   let spinning = false;
   spinBtn.addEventListener("click", async () => {
     if (spinning) return;
     spinning = true;
     spinBtn.disabled = true;
-    windowEl.classList.remove("slot-win");
+    nameEl.textContent = "";
+    nameEl.className = "slot-name";
     resultEl.replaceChildren();
-    const candidates = await getCandidates();
+    reels.forEach((r) => {
+      r.className = "slot-reel spinning";
+    });
+    const candidates = await config.getCandidates();
     if (!candidates || candidates.length === 0) {
-      windowEl.textContent = "— ERROR —";
-      resultEl.textContent = errorText;
+      reels.forEach((r) => {
+        r.className = "slot-reel";
+        r.textContent = "✕";
+      });
+      resultEl.textContent = config.errorText;
       spinning = false;
       spinBtn.disabled = false;
       return;
     }
-    const winner = candidates[Math.floor(Math.random() * candidates.length)];
-    // リール演出: 速く回り、だんだん減速して当選で止まる
-    let delay = 55;
+    const outcome = rollOutcome();
+    const stopAt = [1100, 1700, 2400];
     const startedAt = performance.now();
-    const DURATION = 2300;
+    const stopped = [false, false, false];
+    const allSpin = [config.target].concat(SLOT_FILLERS);
+
+    function finish() {
+      const hits = outcome.filter((s) => s === config.target).length;
+      const scams = outcome.filter((s) => s === "🎣").length;
+      const rugs = outcome.filter((s) => s === "🧻").length;
+      if (hits === 3) {
+        // 🏆 大当たり: 実在の1件を開示 + 金貨シャワー
+        reels.forEach((r) => r.classList.add("aligned", "tier-s"));
+        const winner = candidates[Math.floor(Math.random() * candidates.length)];
+        coinShower(box, 26);
+        nameEl.textContent = "🏆 JACKPOT! " + config.reelText(winner);
+        nameEl.classList.add("slot-name-win");
+        resultEl.replaceChildren(config.buildResult(winner));
+      } else if (hits === 2) {
+        coinShower(box, 5);
+        nameEl.textContent = "おしい! あと1つで大当たりだった…!";
+      } else if (scams >= 2) {
+        nameEl.textContent = "🎣×" + scams + " スキャム大量発生! DMのリンクは踏まないで!";
+        nameEl.classList.add("slot-name-bad");
+      } else if (rugs >= 2) {
+        nameEl.textContent = "🧻×" + rugs + " ラグ発生! 敷物ごと持っていかれるところだった…";
+        nameEl.classList.add("slot-name-bad");
+      } else {
+        nameEl.textContent = SLOT_MISS_LINES[Math.floor(Math.random() * SLOT_MISS_LINES.length)];
+      }
+      spinning = false;
+      spinBtn.disabled = false;
+      spinBtn.textContent = "🎰 もう一回!";
+    }
+
     function tick() {
       const elapsed = performance.now() - startedAt;
-      if (elapsed >= DURATION) {
-        windowEl.textContent = reelText(winner);
-        windowEl.classList.add("slot-win");
-        resultEl.replaceChildren(buildResult(winner));
-        spinning = false;
-        spinBtn.disabled = false;
-        spinBtn.textContent = "🎰 もう一回!";
+      let allStopped = true;
+      reels.forEach((r, i) => {
+        if (stopped[i]) return;
+        if (elapsed >= stopAt[i]) {
+          stopped[i] = true;
+          r.textContent = outcome[i];
+          r.className = "slot-reel stopped";
+        } else {
+          allStopped = false;
+          r.textContent = allSpin[Math.floor(Math.random() * allSpin.length)];
+        }
+      });
+      if (allStopped) {
+        finish();
         return;
       }
-      const random = candidates[Math.floor(Math.random() * candidates.length)];
-      windowEl.textContent = reelText(random);
-      delay = 55 + (elapsed / DURATION) * (elapsed / DURATION) * 320;
-      setTimeout(tick, delay);
+      setTimeout(tick, 70);
     }
     tick();
   });
@@ -482,6 +576,24 @@ function buildSpoBattle(getCandidates, errorText) {
 }
 
 // ---- 🏃 ADAランナー(横スクロール・ジャンプ回避ゲーム) ----
+// ゲームオーバー時に表示する「現実の提案」の実例(教育オチ)
+const WORST_PROPOSALS = [
+  "調達のときだけ「投票お願いします!」と現れて、資金を得たあとは音沙汰なし。",
+  "エコシステムには一部だけ貢献し、残りの資金はそのまま給料に消えた。",
+  "資金調達後、GitHubのコミットはゼロ。ロードマップも一度も更新されなかった。",
+  "同じ内容の提案を名前だけ変えて何度も出し、多重に資金を調達していた。",
+  "報告書は毎回提出されるが、中身はテンプレの使い回しで検証できる成果物がない。",
+  "マイルストーン報告が自画自賛だけで、動くものが最後まで出てこなかった。",
+];
+const BEST_PROPOSALS = [
+  "調達前から動くプロトタイプを公開し、調達後も毎月の進捗報告とGitHub更新を続けた。",
+  "予算の内訳を最初からすべて公開し、余った資金はTreasuryに返還した。",
+  "成果物をオープンソースで公開し、他のプロジェクトも再利用できるようにした。",
+  "コミュニティの指摘を受けて仕様を修正し、完成後も自費で運用を続けている。",
+  "調達額を必要最小限に絞り、追加が必要なときは成果を見せてから再提案した。",
+  "検証可能なマイルストーンを設定し、達成できなかった部分を正直に報告した。",
+];
+
 function buildRunnerGame() {
   const box = document.createElement("div");
   box.className = "runner-box";
@@ -492,11 +604,14 @@ function buildRunnerGame() {
   canvas.setAttribute("tabindex", "0");
   const hud = document.createElement("div");
   hud.className = "runner-hud";
+  const lessons = document.createElement("div");
+  lessons.className = "runner-lessons";
   const legend = document.createElement("div");
   legend.className = "slot-note";
   legend.textContent = "タップ/スペースでジャンプ。🎣スキャム・🧻ラグはよける!🟢いい提案は取る、🔴わるい提案はスルー、₳コインで加点!";
   box.appendChild(canvas);
   box.appendChild(hud);
+  box.appendChild(lessons);
   box.appendChild(legend);
 
   const ctx = canvas.getContext("2d");
@@ -535,6 +650,69 @@ function buildRunnerGame() {
     P.vy = 0;
     gameOver = false;
     nextSpawn = 60;
+    lessons.replaceChildren();
+  }
+
+  // ₳の頭を持つスティックランナー(走り/ジャンプのポーズ付き)
+  function drawRunner(c) {
+    const cx = P.x + P.w / 2;
+    const feetY = P.y;
+    const hipY = feetY - 14;
+    const shoulderY = feetY - 26;
+    const headCY = feetY - 34;
+    const airborne = P.y < GROUND_Y - 1;
+    const phase = Math.sin(frame * 0.38);
+    ctx.strokeStyle = c.text;
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    // 胴体
+    ctx.beginPath();
+    ctx.moveTo(cx, shoulderY);
+    ctx.lineTo(cx, hipY);
+    ctx.stroke();
+    // 脚
+    ctx.beginPath();
+    if (airborne) {
+      // ジャンプ: 両脚を前後にたたむ
+      ctx.moveTo(cx, hipY);
+      ctx.lineTo(cx + 8, hipY + 6);
+      ctx.lineTo(cx + 12, hipY + 1);
+      ctx.moveTo(cx, hipY);
+      ctx.lineTo(cx - 7, hipY + 7);
+      ctx.lineTo(cx - 12, hipY + 3);
+    } else {
+      // 走り: 交互に振る
+      ctx.moveTo(cx, hipY);
+      ctx.lineTo(cx + phase * 9, hipY + 8);
+      ctx.lineTo(cx + phase * 13, feetY);
+      ctx.moveTo(cx, hipY);
+      ctx.lineTo(cx - phase * 9, hipY + 8);
+      ctx.lineTo(cx - phase * 12, feetY - 1);
+    }
+    ctx.stroke();
+    // 腕(脚と逆位相で振る)
+    ctx.beginPath();
+    if (airborne) {
+      ctx.moveTo(cx, shoulderY + 2);
+      ctx.lineTo(cx + 9, shoulderY - 6);
+      ctx.moveTo(cx, shoulderY + 2);
+      ctx.lineTo(cx - 9, shoulderY - 5);
+    } else {
+      ctx.moveTo(cx, shoulderY + 2);
+      ctx.lineTo(cx - phase * 10, shoulderY + 9);
+      ctx.moveTo(cx, shoulderY + 2);
+      ctx.lineTo(cx + phase * 10, shoulderY + 8);
+    }
+    ctx.stroke();
+    // 頭(₳コイン)
+    ctx.fillStyle = c.accent;
+    ctx.beginPath();
+    ctx.arc(cx, headCY, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("₳", cx, headCY + 4);
   }
 
   function jump() {
@@ -555,21 +733,24 @@ function buildRunnerGame() {
   }
 
   function spawn() {
-    const speedBias = Math.min(frame / 3600, 1);
+    const speedBias = Math.min(frame / 2400, 1);
     const roll = Math.random();
+    // 空中アイテムは高さもランダム(ジャンプの高さ調整が要る)
+    const airY = 74 + Math.random() * 48;
     // 地上障害物: スキャム/ラグ(ジャンプで回避) / 空中: 提案(緑=取る,赤=取らない)・コイン
     if (roll < 0.3) {
       entities.push({ type: "scam", icon: "🎣", x: 580, y: GROUND_Y, w: 26, h: 28 });
     } else if (roll < 0.5) {
       entities.push({ type: "rug", icon: "🧻", x: 580, y: GROUND_Y, w: 30, h: 24 });
     } else if (roll < 0.68) {
-      entities.push({ type: "good", icon: "🟢", x: 580, y: 92, w: 24, h: 24 });
+      entities.push({ type: "good", icon: "🟢", x: 580, y: airY, w: 24, h: 24 });
     } else if (roll < 0.84) {
-      entities.push({ type: "bad", icon: "🔴", x: 580, y: 92, w: 24, h: 24 });
+      entities.push({ type: "bad", icon: "🔴", x: 580, y: airY, w: 24, h: 24 });
     } else {
-      entities.push({ type: "coin", icon: "", x: 580, y: 108, w: 20, h: 20 });
+      entities.push({ type: "coin", icon: "", x: 580, y: airY + 10, w: 20, h: 20 });
     }
-    nextSpawn = 55 + Math.floor(Math.random() * 60) - Math.floor(speedBias * 20);
+    // 間隔は詰めめ+スピードが上がるほどさらに短く(テンポ重視)
+    nextSpawn = 34 + Math.floor(Math.random() * 38) - Math.floor(speedBias * 14);
   }
 
   function hit(a, b) {
@@ -585,7 +766,8 @@ function buildRunnerGame() {
   function loop() {
     if (!running) return;
     const c = themeColors();
-    const speed = 3.4 + Math.min(frame / 1500, 3);
+    // だんだん速くなる(上限なし・テンポよく)
+    const speed = 3.6 + frame / 700;
     frame += 1;
     score += 0.06;
 
@@ -638,16 +820,9 @@ function buildRunnerGame() {
     ctx.lineTo(560, GROUND_Y + 2);
     ctx.stroke();
 
-    // プレイヤー(₳コインの勇者)
-    ctx.font = "26px sans-serif";
+    // プレイヤー(₳の勇者・走り/ジャンプアニメーション)
     ctx.textAlign = "center";
-    ctx.fillStyle = c.accent;
-    ctx.beginPath();
-    ctx.arc(P.x + P.w / 2, P.y - P.h / 2, 15, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 18px sans-serif";
-    ctx.fillText("₳", P.x + P.w / 2, P.y - P.h / 2 + 6);
+    drawRunner(c);
 
     // エンティティ
     entities.forEach((e) => {
@@ -685,6 +860,22 @@ function buildRunnerGame() {
       ctx.fillText(`スコア ${finalScore} / ベスト ${best}`, 280, 108);
       ctx.fillText("タップでもう一回!", 280, 132);
       hud.textContent = `SCORE ${finalScore}　BEST ${best}`;
+      // 教育オチ: 現実の「最悪の提案」と「最善の提案」の実例をランダム表示
+      lessons.replaceChildren();
+      const worst = WORST_PROPOSALS[Math.floor(Math.random() * WORST_PROPOSALS.length)];
+      const bestEx = BEST_PROPOSALS[Math.floor(Math.random() * BEST_PROPOSALS.length)];
+      const worstEl = document.createElement("div");
+      worstEl.className = "lesson lesson-worst";
+      worstEl.textContent = "📉 現実の最悪な提案の例: " + worst;
+      const bestEl = document.createElement("div");
+      bestEl.className = "lesson lesson-best";
+      bestEl.textContent = "📈 現実の最善な提案の例: " + bestEx;
+      const moral = document.createElement("div");
+      moral.className = "lesson lesson-moral";
+      moral.textContent = "ゲームと同じで、現実の提案も「取るか・スルーするか」を見分ける目が大事。投票の前に過去の実績を見よう!";
+      lessons.appendChild(worstEl);
+      lessons.appendChild(bestEl);
+      lessons.appendChild(moral);
       return;
     }
     requestAnimationFrame(loop);
@@ -871,8 +1062,8 @@ function renderNode(nodeId, opts = {}) {
   }
 
   if (node.type === "slot-pool") {
-    const machine = buildSlotMachine(
-      async () => {
+    const machine = buildSlotMachine({
+      getCandidates: async () => {
         const pools = await fetchRelayHealthPools();
         if (!pools) return null;
         return pools.filter(
@@ -883,8 +1074,10 @@ function renderNode(nodeId, opts = {}) {
             p.ticker !== "N/A"
         );
       },
-      (p) => "[" + p.ticker + "]",
-      (p) => {
+      target: "🏊",
+      targetName: "プール",
+      reelText: (p) => "[" + p.ticker + "]",
+      buildResult: (p) => {
         const grade = p.score >= 95 ? "S" : "A";
         const marginPct = Math.round(p.margin * 1000) / 10;
         return slotStatLine([
@@ -895,9 +1088,12 @@ function renderNode(nodeId, opts = {}) {
           ["委任者", p.delegators + "人"],
         ]);
       },
-      node.errorText
+      errorText: node.errorText,
+    });
+    appendBubble(
+      "🎰 **SPOスロット**! リールには🏊プールのほかに🎣スキャムや🧻ラグも紛れています。**🏊が3つ揃うと大当たり** — S・Aグレードの実在プールが1つ開示されます:",
+      "bot"
     );
-    appendBubble("🎰 **SPOスロット**! S・Aグレードのプールだけが入ったリールです。回してみてください:", "bot");
     appendBubble(machine, "bot");
     clearOptions();
     renderNavButtons({ showBack: state.history.length > 0, showHome: true });
@@ -905,10 +1101,12 @@ function renderNode(nodeId, opts = {}) {
   }
 
   if (node.type === "slot-drep") {
-    const machine = buildSlotMachine(
-      async () => fetchDrepTarget15Candidates(),
-      (d) => d.name || d.id.slice(0, 16) + "…",
-      (d) => {
+    const machine = buildSlotMachine({
+      getCandidates: async () => fetchDrepTarget15Candidates(),
+      target: "🗳️",
+      targetName: "DRep",
+      reelText: (d) => d.name || d.id.slice(0, 16) + "…",
+      buildResult: (d) => {
         const wrap = document.createElement("div");
         wrap.appendChild(
           slotStatLine([
@@ -924,9 +1122,12 @@ function renderNode(nodeId, opts = {}) {
         wrap.appendChild(idLine);
         return wrap;
       },
-      node.errorText
+      errorText: node.errorText,
+    });
+    appendBubble(
+      "🎰 **DRepスロット**! リールには🗳️DRepのほかに🎣スキャムや🧻ラグも紛れています。**🗳️が3つ揃うと大当たり** — 投票力1.5%未満(Target 15)の実在DRepが1人開示されます:",
+      "bot"
     );
-    appendBubble("🎰 **DRepスロット**! 投票力1.5%未満(Target 15)のDRepだけが入ったリールです。回してみてください:", "bot");
     appendBubble(machine, "bot");
     clearOptions();
     renderNavButtons({ showBack: state.history.length > 0, showHome: true });
