@@ -249,7 +249,7 @@ body {
   padding: 4px 16px 14px;
   overflow: hidden;
   /* ヒーロー+ヘッド+アプリ縦リストの自然高より大きく保つこと(超えると下が切れる) */
-  max-height: 540px;
+  max-height: 640px;
   opacity: 1;
   transition: max-height 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease,
     padding 0.5s cubic-bezier(0.22, 1, 0.36, 1);
@@ -326,7 +326,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: min(580px, 100%);
+  width: 100%;
 }
 
 #promo-apps .app {
@@ -654,19 +654,70 @@ body {
   transform: scale(0.96);
 }
 
-/* ---------- ADA price + holdings calculator (アプリ一覧内の1行) ---------- */
+/* ---------- ADA price card (総合サイトカードと同格・その直下) ---------- */
 
-.app-calc {
-  cursor: default;
-}
-
-.app-calc:hover {
-  background: transparent;
-  transform: none;
+#price-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(580px, 100%);
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: var(--shadow-pill);
 }
 
 #ada-price {
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- おすすめツールの折りたたみ ---------- */
+
+#promo-more {
+  width: min(580px, 100%);
+}
+
+#promo-more summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  list-style: none;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--chrome-text);
+  background: var(--chrome-bg);
+  transition: background-color 0.15s ease;
+  user-select: none;
+}
+
+#promo-more summary::-webkit-details-marker {
+  display: none;
+}
+
+#promo-more summary:hover {
+  background: var(--chrome-bg-hover);
+}
+
+#promo-more summary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+#promo-more .chev {
+  transition: transform 0.2s ease;
+}
+
+#promo-more[open] .chev {
+  transform: rotate(180deg);
+}
+
+#promo-more[open] summary {
+  margin-bottom: 8px;
 }
 
 .calc-row {

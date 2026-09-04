@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <title>What's Cardano?</title>
-<link rel="stylesheet" href="styles.css?v=14">
+<link rel="stylesheet" href="styles.css?v=15">
 </head>
 <body>
   <div id="chat-app">
@@ -30,7 +30,19 @@
         </span>
         <span class="promo-open">開く ↗</span>
       </a>
-      <nav id="promo-apps" aria-label="Governance Skill のツール">
+      <div id="price-card">
+        <img class="promo-hub-icon" src="icons/ada.svg" alt="" width="34" height="34">
+        <span class="promo-head-text">
+          <span class="promo-label" id="ada-price" aria-live="polite">ADA ¥–</span>
+          <span class="promo-desc calc-row">
+            <input id="ada-amount" type="number" inputmode="decimal" placeholder="保有枚数" min="0" step="any">
+            <span id="ada-total">= ¥–</span>
+          </span>
+        </span>
+      </div>
+      <details id="promo-more">
+        <summary>おすすめツールを5つ見る<span class="chev" aria-hidden="true">▾</span></summary>
+        <nav id="promo-apps" aria-label="Governance Skill のツール">
         <a class="app" href="https://hfot.github.io/spo-onchain-alive/" target="_blank" rel="noopener">
           <img class="app-icon" src="icons/alive.svg" alt="" width="48" height="48">
           <span class="app-text">
@@ -59,17 +71,15 @@
             <span class="app-desc">XやDiscordの投稿を貼ると、議論がどう広がるかをAIが分析。無料AIのキーで動き、使い慣れたAIに手動で渡せばさらに高精度になります。</span>
           </span>
         </a>
-        <div class="app app-calc">
-          <img class="app-icon" src="icons/ada.svg" alt="" width="48" height="48">
+        <a class="app" href="https://hfot.github.io/cardano-spiral/" target="_blank" rel="noopener">
+          <img class="app-icon" src="icons/spiral.svg" alt="" width="48" height="48">
           <span class="app-text">
-            <span class="app-name" id="ada-price" aria-live="polite">ADA ¥–</span>
-            <span class="app-desc calc-row">
-              <input id="ada-amount" type="number" inputmode="decimal" placeholder="保有枚数" min="0" step="any">
-              <span id="ada-total">= ¥–</span>
-            </span>
+            <span class="app-name">The Decentralization Spiral</span>
+            <span class="app-desc">Cardanoの現状をあえて辛口にまとめた一枚もの。実測ではなくAIによる解釈として、考える材料にどうぞ。</span>
           </span>
-        </div>
-      </nav>
+        </a>
+        </nav>
+      </details>
     </section>
     <div id="chat-log" role="log" aria-live="polite"></div>
     <div id="chat-options"></div>
@@ -78,6 +88,6 @@
       <button type="submit">送信</button>
     </form>
   </div>
-  <script type="module" src="app.js?v=14"></script>
+  <script type="module" src="app.js?v=15"></script>
 </body>
 </html>

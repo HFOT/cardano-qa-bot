@@ -1,8 +1,8 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=14";
-import spoContent from "./content/spo.js?v=14";
-import drepContent from "./content/drep.js?v=14";
-import scamContent from "./content/scam.js?v=14";
+import walletContent from "./content/wallet.js?v=15";
+import spoContent from "./content/spo.js?v=15";
+import drepContent from "./content/drep.js?v=15";
+import scamContent from "./content/scam.js?v=15";
 
 const HOME_NODE_ID = "home";
 
