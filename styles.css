@@ -307,8 +307,8 @@ body {
   justify-content: center;
   padding: 4px 16px 14px;
   overflow: hidden;
-  /* ヒーロー+ヘッド+アプリ縦リストの自然高より大きく保つこと(超えると下が切れる) */
-  max-height: 640px;
+  /* ヒーロー+ヘッド+チャート+アプリ縦リストの自然高より大きく保つこと(超えると下が切れる) */
+  max-height: 900px;
   opacity: 1;
   transition: max-height 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease,
     padding 0.5s cubic-bezier(0.22, 1, 0.36, 1);
@@ -729,6 +729,116 @@ body {
 
 #ada-price {
   font-variant-numeric: tabular-nums;
+}
+
+#chart-btn {
+  margin-left: auto;
+  flex: none;
+  appearance: none;
+  background: var(--chrome-bg);
+  border: none;
+  color: var(--chrome-text);
+  border-radius: 9999px;
+  padding: 7px 13px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
+}
+
+#chart-btn:hover {
+  background: var(--chrome-bg-hover);
+}
+
+#chart-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ---------- 価格チャートパネル ---------- */
+
+#chart-panel {
+  width: min(580px, 100%);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: var(--shadow-pill);
+}
+
+#chart-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.chart-tab {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 600;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.chart-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.chart-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+#chart-box {
+  min-height: 150px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#chart-box svg {
+  display: block;
+  width: 100%;
+  height: 150px;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-area {
+  fill: rgba(10, 132, 255, 0.1);
+  stroke: none;
+}
+
+#chart-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chg-up {
+  color: #30a46c;
+  font-weight: 700;
+}
+
+.chg-down {
+  color: #e5484d;
+  font-weight: 700;
 }
 
 /* ---------- おすすめツールの折りたたみ ---------- */

@@ -1,9 +1,9 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=20";
-import spoContent from "./content/spo.js?v=20";
-import drepContent from "./content/drep.js?v=20";
-import scamContent from "./content/scam.js?v=20";
-import valueContent from "./content/value.js?v=20";
+import walletContent from "./content/wallet.js?v=21";
+import spoContent from "./content/spo.js?v=21";
+import drepContent from "./content/drep.js?v=21";
+import scamContent from "./content/scam.js?v=21";
+import valueContent from "./content/value.js?v=21";
 
 const HOME_NODE_ID = "home";
 
@@ -583,6 +583,107 @@ fetch(ADA_PRICE_URL)
   });
 
 amountEl.addEventListener("input", updateAdaTotal);
+
+// ---- 価格チャート(CoinGecko market_chart・無料/キー不要/CORS可) ----
+const chartBtn = document.getElementById("chart-btn");
+const chartPanel = document.getElementById("chart-panel");
+const chartBox = document.getElementById("chart-box");
+const chartMeta = document.getElementById("chart-meta");
+const chartCache = {};
+let chartDays = 30;
+
+async function fetchChartPrices(days) {
+  if (chartCache[days]) return chartCache[days];
+  const res = await fetch(
+    "https://api.coingecko.com/api/v3/coins/cardano/market_chart?vs_currency=jpy&days=" + days
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (!data || !Array.isArray(data.prices) || data.prices.length < 2) return null;
+  chartCache[days] = data.prices;
+  return data.prices;
+}
+
+function fmtJpyPrice(v) {
+  return "¥" + v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+function renderChart(prices) {
+  const W = 560;
+  const H = 150;
+  const PAD = 6;
+  const vals = prices.map((p) => p[1]);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const span = max - min || 1;
+  const pts = prices.map((p, i) => {
+    const x = PAD + (i / (prices.length - 1)) * (W - PAD * 2);
+    const y = PAD + (1 - (p[1] - min) / span) * (H - PAD * 2);
+    return x.toFixed(1) + "," + y.toFixed(1);
+  });
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("preserveAspectRatio", "none");
+  const area = document.createElementNS(svgNS, "polygon");
+  area.setAttribute(
+    "points",
+    PAD + "," + (H - PAD) + " " + pts.join(" ") + " " + (W - PAD) + "," + (H - PAD)
+  );
+  area.setAttribute("class", "chart-area");
+  const line = document.createElementNS(svgNS, "polyline");
+  line.setAttribute("points", pts.join(" "));
+  line.setAttribute("class", "chart-line");
+  svg.appendChild(area);
+  svg.appendChild(line);
+  chartBox.replaceChildren(svg);
+
+  const first = vals[0];
+  const last = vals[vals.length - 1];
+  const chg = ((last - first) / first) * 100;
+  chartMeta.replaceChildren();
+  const parts = [
+    ["現在", fmtJpyPrice(last)],
+    ["高値", fmtJpyPrice(max)],
+    ["安値", fmtJpyPrice(min)],
+  ];
+  parts.forEach(([label, value]) => {
+    const span2 = document.createElement("span");
+    span2.textContent = label + " " + value;
+    chartMeta.appendChild(span2);
+  });
+  const chgSpan = document.createElement("span");
+  chgSpan.className = chg >= 0 ? "chg-up" : "chg-down";
+  chgSpan.textContent = "期間 " + (chg >= 0 ? "+" : "") + chg.toFixed(1) + "%";
+  chartMeta.appendChild(chgSpan);
+}
+
+async function showChart(days) {
+  chartDays = days;
+  document.querySelectorAll(".chart-tab").forEach((b) => {
+    b.classList.toggle("active", Number(b.dataset.days) === days);
+  });
+  chartBox.textContent = "読み込み中…";
+  const prices = await fetchChartPrices(days);
+  if (days !== chartDays) return; // タブが先に切り替わっていたら破棄
+  if (!prices) {
+    chartBox.textContent = "チャートを取得できませんでした";
+    chartMeta.replaceChildren();
+    return;
+  }
+  renderChart(prices);
+}
+
+chartBtn.addEventListener("click", () => {
+  const opening = chartPanel.hidden;
+  chartPanel.hidden = !opening;
+  chartBtn.textContent = opening ? "チャート ▴" : "チャート ▾";
+  if (opening) showChart(chartDays);
+});
+
+document.querySelectorAll(".chart-tab").forEach((b) => {
+  b.addEventListener("click", () => showChart(Number(b.dataset.days)));
+});
 
 // ---- ライト/ダーク手動切替(未設定時はOS設定に従う) ----
 const themeBtn = document.getElementById("theme-btn");
