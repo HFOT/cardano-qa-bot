@@ -67,7 +67,7 @@ export default {
       type: "answer",
       label: "固定手数料(fixed cost)って何?",
       text: "fixed cost(固定手数料)は、プールがブロックを1つ作るたびに運営者へ先に差し引かれる一定額のADAです。プロトコル全体で下限が決まっており、大きなプールでも小さなプールでも1ブロックあたり同じ額が引かれます。委任額が大きいほど、この固定手数料の影響(割合)は相対的に小さくなります。",
-      keywords: ["fixed cost", "固定手数料"],
+      keywords: ["fixed", "固定手数料"],
     },
     "spo-fees-roa": {
       type: "answer",
