@@ -1,10 +1,11 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=24";
-import spoContent from "./content/spo.js?v=24";
-import drepContent from "./content/drep.js?v=24";
-import scamContent from "./content/scam.js?v=24";
-import valueContent from "./content/value.js?v=24";
-import midnightContent from "./content/midnight.js?v=24";
+import walletContent from "./content/wallet.js?v=25";
+import spoContent from "./content/spo.js?v=25";
+import drepContent from "./content/drep.js?v=25";
+import scamContent from "./content/scam.js?v=25";
+import valueContent from "./content/value.js?v=25";
+import midnightContent from "./content/midnight.js?v=25";
+import gameContent from "./content/game.js?v=25";
 
 const HOME_NODE_ID = "home";
 
@@ -18,6 +19,7 @@ const HOME_NODE = {
     { label: "詐欺の手口を知る", next: "scam-root" },
     { label: "ADAの価値は上がるの?", next: "value-root" },
     { label: "Midnightって何?", next: "mn-root" },
+    { label: "🎰 スロットで遊ぶ", next: "game-root" },
   ],
 };
 
@@ -29,7 +31,8 @@ function mergeNodes() {
     drepContent.nodes,
     scamContent.nodes,
     valueContent.nodes,
-    midnightContent.nodes
+    midnightContent.nodes,
+    gameContent.nodes
   );
 }
 
@@ -184,6 +187,248 @@ function appendEmbed(url, title, opts = {}) {
   }
 }
 
+// ---- 🎰 スロットマシン ----
+// getCandidates: () => Promise<array|null>
+// reelText: (item) => リールに流す短い文字列
+// buildResult: (item) => 当選表示のDOM
+function buildSlotMachine(getCandidates, reelText, buildResult, errorText) {
+  const box = document.createElement("div");
+  box.className = "slot-machine";
+  const windowEl = document.createElement("div");
+  windowEl.className = "slot-window";
+  windowEl.textContent = "— READY —";
+  const spinBtn = document.createElement("button");
+  spinBtn.type = "button";
+  spinBtn.className = "slot-spin-btn";
+  spinBtn.textContent = "🎰 回す!";
+  const resultEl = document.createElement("div");
+  resultEl.className = "slot-result";
+  const noteEl = document.createElement("div");
+  noteEl.className = "slot-note";
+  noteEl.textContent = "※遊びです。委任の推奨ではありません。";
+  box.appendChild(windowEl);
+  box.appendChild(spinBtn);
+  box.appendChild(resultEl);
+  box.appendChild(noteEl);
+
+  let spinning = false;
+  spinBtn.addEventListener("click", async () => {
+    if (spinning) return;
+    spinning = true;
+    spinBtn.disabled = true;
+    windowEl.classList.remove("slot-win");
+    resultEl.replaceChildren();
+    const candidates = await getCandidates();
+    if (!candidates || candidates.length === 0) {
+      windowEl.textContent = "— ERROR —";
+      resultEl.textContent = errorText;
+      spinning = false;
+      spinBtn.disabled = false;
+      return;
+    }
+    const winner = candidates[Math.floor(Math.random() * candidates.length)];
+    // リール演出: 速く回り、だんだん減速して当選で止まる
+    let delay = 55;
+    const startedAt = performance.now();
+    const DURATION = 2300;
+    function tick() {
+      const elapsed = performance.now() - startedAt;
+      if (elapsed >= DURATION) {
+        windowEl.textContent = reelText(winner);
+        windowEl.classList.add("slot-win");
+        resultEl.replaceChildren(buildResult(winner));
+        spinning = false;
+        spinBtn.disabled = false;
+        spinBtn.textContent = "🎰 もう一回!";
+        return;
+      }
+      const random = candidates[Math.floor(Math.random() * candidates.length)];
+      windowEl.textContent = reelText(random);
+      delay = 55 + (elapsed / DURATION) * (elapsed / DURATION) * 320;
+      setTimeout(tick, delay);
+    }
+    tick();
+  });
+  return box;
+}
+
+// ---- ⚔️ SPOカードバトル(トップトランプ方式・3ラウンド) ----
+const BATTLE_STATS = [
+  { key: "score", label: "健全性", fmt: (v) => v + "点", higherWins: true },
+  { key: "stake", label: "ステーク", fmt: (v) => Math.round(v / 1000).toLocaleString() + "k₳", higherWins: true },
+  { key: "delegators", label: "委任者", fmt: (v) => v + "人", higherWins: true },
+  { key: "margin", label: "手数料(低が勝ち)", fmt: (v) => Math.round(v * 1000) / 10 + "%", higherWins: false },
+  { key: "rtt", label: "応答速度(低が勝ち)", fmt: (v) => Math.round(v) + "ms", higherWins: false },
+];
+
+function buildBattleCard(pool, { faceDown, onPickStat }) {
+  const card = document.createElement("div");
+  card.className = "battle-card" + (faceDown ? " face-down" : "");
+  const name = document.createElement("div");
+  name.className = "battle-card-name";
+  name.textContent = faceDown ? "???" : "[" + pool.ticker + "]";
+  card.appendChild(name);
+  BATTLE_STATS.forEach((stat, idx) => {
+    const row = document.createElement(onPickStat ? "button" : "div");
+    if (onPickStat) {
+      row.type = "button";
+      row.addEventListener("click", () => onPickStat(idx));
+    }
+    row.className = "battle-stat";
+    row.dataset.statIdx = String(idx);
+    const lb = document.createElement("span");
+    lb.className = "battle-stat-label";
+    lb.textContent = stat.label;
+    const val = document.createElement("span");
+    val.className = "battle-stat-value";
+    val.textContent = faceDown ? "?" : stat.fmt(pool[stat.key]);
+    row.appendChild(lb);
+    row.appendChild(val);
+    card.appendChild(row);
+  });
+  return card;
+}
+
+function buildSpoBattle(getCandidates, errorText) {
+  const box = document.createElement("div");
+  box.className = "battle-box";
+  const header = document.createElement("div");
+  header.className = "battle-header";
+  const arena = document.createElement("div");
+  arena.className = "battle-arena";
+  const verdict = document.createElement("div");
+  verdict.className = "battle-verdict";
+  const controls = document.createElement("div");
+  controls.className = "battle-controls";
+  const note = document.createElement("div");
+  note.className = "slot-note";
+  note.textContent = "※遊びです。カードの強さと委任先の良し悪しは別の話です。";
+  box.appendChild(header);
+  box.appendChild(arena);
+  box.appendChild(verdict);
+  box.appendChild(controls);
+  box.appendChild(note);
+
+  let deck = null;
+  let round = 0;
+  let myScore = 0;
+  let cpuScore = 0;
+  let myCard = null;
+  let cpuCard = null;
+
+  function draw() {
+    return deck[Math.floor(Math.random() * deck.length)];
+  }
+
+  function updateHeader() {
+    header.textContent = round > 3
+      ? "けっか はっぴょう!"
+      : `ROUND ${round}/3 ── あなた ${myScore} - ${cpuScore} あいて`;
+  }
+
+  function startRound() {
+    round += 1;
+    updateHeader();
+    verdict.textContent = "自分のカードから、勝負する能力を選んでください!";
+    controls.replaceChildren();
+    myCard = draw();
+    do {
+      cpuCard = draw();
+    } while (cpuCard.pool === myCard.pool);
+    arena.replaceChildren(
+      buildBattleCard(myCard, { faceDown: false, onPickStat: resolveRound }),
+      buildBattleCard(cpuCard, { faceDown: true })
+    );
+  }
+
+  function resolveRound(statIdx) {
+    const stat = BATTLE_STATS[statIdx];
+    // 相手カードをオープンして両者の選択能力をハイライト
+    arena.replaceChildren(
+      buildBattleCard(myCard, { faceDown: false }),
+      buildBattleCard(cpuCard, { faceDown: false })
+    );
+    arena.querySelectorAll(`.battle-stat[data-stat-idx="${statIdx}"]`).forEach((el) => {
+      el.classList.add("battle-stat-active");
+    });
+    const mine = myCard[stat.key];
+    const theirs = cpuCard[stat.key];
+    let result;
+    if (mine === theirs) {
+      result = "引き分け!";
+    } else {
+      const iWin = stat.higherWins ? mine > theirs : mine < theirs;
+      if (iWin) {
+        myScore += 1;
+        result = "🎉 勝ち!";
+      } else {
+        cpuScore += 1;
+        result = "😢 負け…";
+      }
+    }
+    updateHeader();
+    verdict.textContent = `「${stat.label}」で勝負 → ${result}`;
+    const nextBtn = document.createElement("button");
+    nextBtn.type = "button";
+    nextBtn.className = "slot-spin-btn";
+    if (round < 3) {
+      nextBtn.textContent = "次のラウンドへ ▶";
+      nextBtn.addEventListener("click", startRound);
+    } else {
+      nextBtn.textContent = "結果を見る 🏆";
+      nextBtn.addEventListener("click", showFinal);
+    }
+    controls.replaceChildren(nextBtn);
+  }
+
+  function showFinal() {
+    round = 4;
+    updateHeader();
+    arena.replaceChildren();
+    let msg;
+    if (myScore > cpuScore) msg = `🏆 あなたの勝ち! (${myScore} - ${cpuScore})`;
+    else if (myScore < cpuScore) msg = `😢 あなたの負け… (${myScore} - ${cpuScore})`;
+    else msg = `🤝 引き分け! (${myScore} - ${cpuScore})`;
+    verdict.textContent = msg;
+    const againBtn = document.createElement("button");
+    againBtn.type = "button";
+    againBtn.className = "slot-spin-btn";
+    againBtn.textContent = "⚔️ もう一回たたかう";
+    againBtn.addEventListener("click", () => {
+      round = 0;
+      myScore = 0;
+      cpuScore = 0;
+      startRound();
+    });
+    controls.replaceChildren(againBtn);
+  }
+
+  (async () => {
+    header.textContent = "カードを配っています…";
+    const candidates = await getCandidates();
+    if (!candidates || candidates.length < 6) {
+      header.textContent = "— ERROR —";
+      verdict.textContent = errorText;
+      return;
+    }
+    deck = candidates;
+    startRound();
+  })();
+
+  return box;
+}
+
+function slotStatLine(pairs) {
+  const wrap = document.createElement("div");
+  wrap.className = "slot-stats";
+  pairs.forEach(([label, value]) => {
+    const span = document.createElement("span");
+    span.textContent = label + " " + value;
+    wrap.appendChild(span);
+  });
+  return wrap;
+}
+
 // 「他の5件を見る」ボタン + ナビの共通描画
 function renderRerollAndNav(nodeId, label) {
   renderOptionButtons([{ label: label, next: nodeId }], (opt) => {
@@ -326,6 +571,97 @@ function renderNode(nodeId, opts = {}) {
         appendBubble(node.errorText, "bot");
         renderNavButtons({ showBack: state.history.length > 0, showHome: true });
       });
+    return;
+  }
+
+  if (node.type === "slot-pool") {
+    const machine = buildSlotMachine(
+      async () => {
+        const pools = await fetchRelayHealthPools();
+        if (!pools) return null;
+        return pools.filter(
+          (p) =>
+            typeof p.score === "number" &&
+            p.score >= 85 &&
+            p.ticker &&
+            p.ticker !== "N/A"
+        );
+      },
+      (p) => "[" + p.ticker + "]",
+      (p) => {
+        const grade = p.score >= 95 ? "S" : "A";
+        const marginPct = Math.round(p.margin * 1000) / 10;
+        return slotStatLine([
+          ["🎉", "[" + p.ticker + "]"],
+          ["評価", grade + " " + p.score + "点"],
+          ["手数料", marginPct + "% + " + p.fixedAda + "₳"],
+          ["ステーク", Math.round(p.stake).toLocaleString() + "₳"],
+          ["委任者", p.delegators + "人"],
+        ]);
+      },
+      node.errorText
+    );
+    appendBubble("🎰 **SPOスロット**! S・Aグレードのプールだけが入ったリールです。回してみてください:", "bot");
+    appendBubble(machine, "bot");
+    clearOptions();
+    renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+    return;
+  }
+
+  if (node.type === "slot-drep") {
+    const machine = buildSlotMachine(
+      async () => fetchDrepTarget15Candidates(),
+      (d) => d.name || d.id.slice(0, 16) + "…",
+      (d) => {
+        const wrap = document.createElement("div");
+        wrap.appendChild(
+          slotStatLine([
+            ["🎉", d.name || "(名前未登録)"],
+            ["順位", "#" + d.rank],
+            ["投票力", Math.round(d.latest_vp * 1_000_000).toLocaleString() + "₳"],
+            ["シェア", d.sharePct.toFixed(2) + "%"],
+          ])
+        );
+        const idLine = document.createElement("div");
+        idLine.className = "drep-id";
+        idLine.textContent = d.id;
+        wrap.appendChild(idLine);
+        return wrap;
+      },
+      node.errorText
+    );
+    appendBubble("🎰 **DRepスロット**! 投票力1.5%未満(Target 15)のDRepだけが入ったリールです。回してみてください:", "bot");
+    appendBubble(machine, "bot");
+    clearOptions();
+    renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+    return;
+  }
+
+  if (node.type === "spo-battle") {
+    const battle = buildSpoBattle(async () => {
+      const pools = await fetchRelayHealthPools();
+      if (!pools) return null;
+      // バトルには全能力値が揃ったカードだけを使う(RTT未計測などは除外)
+      return pools.filter(
+        (p) =>
+          typeof p.score === "number" &&
+          p.score >= 70 &&
+          p.ticker &&
+          p.ticker !== "N/A" &&
+          typeof p.stake === "number" &&
+          typeof p.delegators === "number" &&
+          typeof p.margin === "number" &&
+          typeof p.rtt === "number" &&
+          p.rtt > 0
+      );
+    }, node.errorText);
+    appendBubble(
+      "⚔️ **SPOカードバトル**! 実在のプールがカードになって登場。自分のカードの能力をひとつ選んで、伏せられた相手カードと勝負。3ラウンド先取で勝敗が決まります:",
+      "bot"
+    );
+    appendBubble(battle, "bot");
+    clearOptions();
+    renderNavButtons({ showBack: state.history.length > 0, showHome: true });
     return;
   }
 
@@ -759,6 +1095,18 @@ themeBtn.addEventListener("click", () => {
     localStorage.setItem("wc_theme", next);
   } catch (e) {}
   updateThemeIcon();
+});
+
+// ---- 起動画面のゲームアイコン: タップでそのゲームのノードへ ----
+document.querySelectorAll(".game-app").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const nodeId = btn.dataset.node;
+    if (!nodes[nodeId]) return;
+    const nameEl = btn.querySelector(".app-name");
+    appendBubble("🎮 " + (nameEl ? nameEl.textContent : "ゲーム"), "user");
+    state.history.push(state.currentNodeId);
+    renderNode(nodeId);
+  });
 });
 
 renderNode(HOME_NODE_ID);

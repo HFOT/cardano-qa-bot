@@ -841,6 +841,273 @@ body {
   font-weight: 700;
 }
 
+/* ---------- 🎰 スロットマシン ---------- */
+
+.slot-machine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(360px, 100%);
+  padding: 4px 0;
+}
+
+.slot-window {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 0 12px;
+}
+
+.slot-window.slot-win {
+  border-color: var(--accent);
+  color: var(--accent);
+  animation: slot-win-pulse 0.5s ease-out;
+}
+
+@keyframes slot-win-pulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.slot-spin-btn {
+  appearance: none;
+  background: linear-gradient(135deg, var(--user-bubble-a), var(--user-bubble-b));
+  border: none;
+  color: #ffffff;
+  border-radius: 9999px;
+  padding: 10px 26px;
+  cursor: pointer;
+  font-size: 14.5px;
+  font-weight: 700;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.slot-spin-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.slot-spin-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.slot-spin-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.slot-spin-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.slot-result {
+  width: 100%;
+  font-size: 12px;
+}
+
+.slot-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.slot-note {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot-window.slot-win {
+    animation: none;
+  }
+}
+
+/* ---------- 起動画面のゲームアイコン列 ---------- */
+
+#game-row {
+  display: flex;
+  justify-content: center;
+  gap: clamp(16px, 4vw, 28px);
+}
+
+.game-app {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.game-app:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+
+.game-app:active {
+  transform: scale(0.94);
+}
+
+.game-app:focus-visible {
+  outline: none;
+  border-radius: 14px;
+  box-shadow: var(--focus-ring);
+}
+
+.game-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.game-icon-slot {
+  background: linear-gradient(135deg, #0a84ff, #0060df);
+}
+
+.game-icon-drep {
+  background: linear-gradient(135deg, #8b6cff, #5b3df0);
+}
+
+.game-icon-battle {
+  background: linear-gradient(135deg, #ff6b4a, #d3323e);
+}
+
+/* ---------- ⚔️ SPOカードバトル ---------- */
+
+.battle-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.battle-header {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.battle-arena {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+}
+
+.battle-card {
+  flex: 1;
+  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border: 2px solid var(--accent);
+  border-radius: 14px;
+  background: var(--bg);
+}
+
+.battle-card.face-down {
+  border-color: var(--border);
+  opacity: 0.85;
+}
+
+.battle-card-name {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.battle-stat {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 5px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--text);
+  text-align: left;
+  width: 100%;
+}
+
+button.battle-stat {
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+button.battle-stat:hover {
+  border-color: var(--accent);
+  background: var(--chrome-bg);
+}
+
+.battle-stat-label {
+  color: var(--muted);
+  font-size: 9.5px;
+}
+
+.battle-stat-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.battle-stat-active {
+  border-color: var(--accent);
+  background: rgba(10, 132, 255, 0.12);
+}
+
+.battle-verdict {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  min-height: 18px;
+}
+
+.battle-controls {
+  display: flex;
+  justify-content: center;
+}
+
 /* ---------- おすすめツールの折りたたみ ---------- */
 
 #promo-more {
