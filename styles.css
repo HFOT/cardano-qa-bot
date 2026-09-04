@@ -619,6 +619,62 @@ body {
   transform: scale(0.96);
 }
 
+/* ---------- ADA price + holdings calculator ---------- */
+
+#price-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 7px 16px;
+  border-top: 1px solid var(--hairline);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+#ada-price {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+#price-bar .calc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#ada-amount {
+  width: 110px;
+  padding: 5px 10px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+#ada-amount::-webkit-outer-spin-button,
+#ada-amount::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+#ada-amount:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+#ada-total {
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* ---------- Input bar ---------- */
 
 #free-text-form {

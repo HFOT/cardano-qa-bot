@@ -8,9 +8,9 @@ AI APIは使用していません。回答内容はすべて `content/*.js` に�
 SPO選び31ノード(5カテゴリ+リレー健全性ランキング連携)、DRep選び26ノード(5カテゴリ+TARGET15連携)、
 詐欺の手口9ノード(実際にあった8つの手口)。
 
-SPO推薦とDRep推薦の2機能だけは例外的に外部サイトへ読み取り専用のfetchを行う
-(`hfot.github.io/cardano-relay-health` と `hfot.github.io/drep-terminal-v6`。
-どちらも自分が運営する無料・APIキー不要の公開ページ)。それ以外はAI・外部API不使用の完全静的動作。
+外部への読み取り専用fetchは3つだけ: SPO推薦(`hfot.github.io/cardano-relay-health`)、
+DRep推薦(`hfot.github.io/drep-terminal-v6`)、ADA価格表示(CoinGecko `simple/price`、無料・キー不要)。
+それ以外はAI・外部API不使用の完全静的動作。
 
 ## ローカルで動かす
 

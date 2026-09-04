@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <title>What's Cardano?</title>
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
   <div id="chat-app">
@@ -49,11 +49,18 @@
     </section>
     <div id="chat-log" role="log" aria-live="polite"></div>
     <div id="chat-options"></div>
+    <div id="price-bar">
+      <span id="ada-price" aria-live="polite">ADA ¥–</span>
+      <span class="calc">
+        <input id="ada-amount" type="number" inputmode="decimal" placeholder="保有枚数" min="0" step="any">
+        <span id="ada-total">= ¥–</span>
+      </span>
+    </div>
     <form id="free-text-form">
       <input id="free-text-input" type="text" placeholder="気になることを入力(例: 手数料、シードフレーズ)" autocomplete="off">
       <button type="submit">送信</button>
     </form>
   </div>
-  <script type="module" src="app.js?v=9"></script>
+  <script type="module" src="app.js?v=10"></script>
 </body>
 </html>

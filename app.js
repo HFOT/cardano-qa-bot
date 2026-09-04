@@ -1,8 +1,8 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=8";
-import spoContent from "./content/spo.js?v=8";
-import drepContent from "./content/drep.js?v=8";
-import scamContent from "./content/scam.js?v=8";
+import walletContent from "./content/wallet.js?v=10";
+import spoContent from "./content/spo.js?v=10";
+import drepContent from "./content/drep.js?v=10";
+import scamContent from "./content/scam.js?v=10";
 
 const HOME_NODE_ID = "home";
 
@@ -532,5 +532,53 @@ freeTextForm.addEventListener("submit", (e) => {
   handleFreeTextSubmit(freeTextInput.value);
   freeTextInput.value = "";
 });
+
+// ---- ADA価格(CoinGecko simple/price・無料/キー不要/CORS可) + 保有総額計算 ----
+const ADA_PRICE_URL =
+  "https://api.coingecko.com/api/v3/simple/price?ids=cardano&vs_currencies=jpy,usd";
+const priceEl = document.getElementById("ada-price");
+const amountEl = document.getElementById("ada-amount");
+const totalEl = document.getElementById("ada-total");
+let adaPrice = null;
+
+function formatJpy(n) {
+  return "¥" + Math.round(n).toLocaleString();
+}
+
+function formatUsd(n) {
+  return "$" + (n >= 100 ? Math.round(n).toLocaleString() : n.toFixed(2));
+}
+
+function updateAdaTotal() {
+  if (!adaPrice) return;
+  const amount = parseFloat(amountEl.value);
+  if (!isFinite(amount) || amount <= 0) {
+    totalEl.textContent = "= ¥–";
+    return;
+  }
+  totalEl.textContent =
+    "= " + formatJpy(amount * adaPrice.jpy) + " (" + formatUsd(amount * adaPrice.usd) + ")";
+}
+
+fetch(ADA_PRICE_URL)
+  .then((r) => (r.ok ? r.json() : null))
+  .then((data) => {
+    const p = data && data.cardano;
+    if (!p || typeof p.jpy !== "number" || typeof p.usd !== "number") {
+      throw new Error("bad price data");
+    }
+    adaPrice = p;
+    priceEl.textContent =
+      "ADA ¥" +
+      p.jpy.toLocaleString(undefined, { maximumFractionDigits: 2 }) +
+      " / $" +
+      p.usd.toFixed(4);
+    updateAdaTotal();
+  })
+  .catch(() => {
+    priceEl.textContent = "ADA 価格取得不可";
+  });
+
+amountEl.addEventListener("input", updateAdaTotal);
 
 renderNode(HOME_NODE_ID);
