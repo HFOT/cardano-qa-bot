@@ -155,6 +155,7 @@ body {
   text-align: center;
   padding: 36px 24px 22px;
   overflow: hidden;
+  /* Must exceed the hero's max natural content height or content will clip. */
   max-height: 420px;
   opacity: 1;
   transform: translateY(0) scale(1);
@@ -215,6 +216,12 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+@supports not (background-clip: text) {
+  #hero-title-accent {
+    color: var(--hero-title-a);
+  }
 }
 
 #hero-subtitle {
