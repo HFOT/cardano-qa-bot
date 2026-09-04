@@ -1,11 +1,11 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=25";
-import spoContent from "./content/spo.js?v=25";
-import drepContent from "./content/drep.js?v=25";
-import scamContent from "./content/scam.js?v=25";
-import valueContent from "./content/value.js?v=25";
-import midnightContent from "./content/midnight.js?v=25";
-import gameContent from "./content/game.js?v=25";
+import walletContent from "./content/wallet.js?v=26";
+import spoContent from "./content/spo.js?v=26";
+import drepContent from "./content/drep.js?v=26";
+import scamContent from "./content/scam.js?v=26";
+import valueContent from "./content/value.js?v=26";
+import midnightContent from "./content/midnight.js?v=26";
+import gameContent from "./content/game.js?v=26";
 
 const HOME_NODE_ID = "home";
 
@@ -418,6 +418,239 @@ function buildSpoBattle(getCandidates, errorText) {
   return box;
 }
 
+// ---- 🏃 ADAランナー(横スクロール・ジャンプ回避ゲーム) ----
+function buildRunnerGame() {
+  const box = document.createElement("div");
+  box.className = "runner-box";
+  const canvas = document.createElement("canvas");
+  canvas.width = 560;
+  canvas.height = 190;
+  canvas.className = "runner-canvas";
+  canvas.setAttribute("tabindex", "0");
+  const hud = document.createElement("div");
+  hud.className = "runner-hud";
+  const legend = document.createElement("div");
+  legend.className = "slot-note";
+  legend.textContent = "タップ/スペースでジャンプ。🎣スキャム・🧻ラグはよける!🟢いい提案は取る、🔴わるい提案はスルー、₳コインで加点!";
+  box.appendChild(canvas);
+  box.appendChild(hud);
+  box.appendChild(legend);
+
+  const ctx = canvas.getContext("2d");
+  const GROUND_Y = 158;
+  const P = { x: 56, y: GROUND_Y, vy: 0, w: 26, h: 30 };
+  const GRAVITY = 0.55;
+  const JUMP_V = -10.2;
+  let entities = [];
+  let frame = 0;
+  let score = 0;
+  let flash = 0;
+  let running = false;
+  let gameOver = false;
+  let nextSpawn = 60;
+  let best = 0;
+  try {
+    best = parseInt(localStorage.getItem("wc_runner_best") || "0", 10) || 0;
+  } catch (e) {}
+
+  function themeColors() {
+    const cs = getComputedStyle(document.documentElement);
+    return {
+      bg: cs.getPropertyValue("--panel").trim() || "#ffffff",
+      ground: cs.getPropertyValue("--hairline").trim() || "#ccc",
+      text: cs.getPropertyValue("--text").trim() || "#111",
+      accent: cs.getPropertyValue("--accent").trim() || "#0a84ff",
+    };
+  }
+
+  function reset() {
+    entities = [];
+    frame = 0;
+    score = 0;
+    flash = 0;
+    P.y = GROUND_Y;
+    P.vy = 0;
+    gameOver = false;
+    nextSpawn = 60;
+  }
+
+  function jump() {
+    if (gameOver) {
+      reset();
+      running = true;
+      loop();
+      return;
+    }
+    if (!running) {
+      running = true;
+      loop();
+      return;
+    }
+    if (P.y >= GROUND_Y - 1) {
+      P.vy = JUMP_V;
+    }
+  }
+
+  function spawn() {
+    const speedBias = Math.min(frame / 3600, 1);
+    const roll = Math.random();
+    // 地上障害物: スキャム/ラグ(ジャンプで回避) / 空中: 提案(緑=取る,赤=取らない)・コイン
+    if (roll < 0.3) {
+      entities.push({ type: "scam", icon: "🎣", x: 580, y: GROUND_Y, w: 26, h: 28 });
+    } else if (roll < 0.5) {
+      entities.push({ type: "rug", icon: "🧻", x: 580, y: GROUND_Y, w: 30, h: 24 });
+    } else if (roll < 0.68) {
+      entities.push({ type: "good", icon: "🟢", x: 580, y: 92, w: 24, h: 24 });
+    } else if (roll < 0.84) {
+      entities.push({ type: "bad", icon: "🔴", x: 580, y: 92, w: 24, h: 24 });
+    } else {
+      entities.push({ type: "coin", icon: "", x: 580, y: 108, w: 20, h: 20 });
+    }
+    nextSpawn = 55 + Math.floor(Math.random() * 60) - Math.floor(speedBias * 20);
+  }
+
+  function hit(a, b) {
+    const shrink = 5;
+    return (
+      a.x + shrink < b.x + b.w - shrink &&
+      a.x + a.w - shrink > b.x + shrink &&
+      a.y + shrink < b.y + b.h - shrink &&
+      a.y + a.h - shrink > b.y + shrink
+    );
+  }
+
+  function loop() {
+    if (!running) return;
+    const c = themeColors();
+    const speed = 3.4 + Math.min(frame / 1500, 3);
+    frame += 1;
+    score += 0.06;
+
+    // 物理
+    P.vy += GRAVITY;
+    P.y += P.vy;
+    if (P.y > GROUND_Y) {
+      P.y = GROUND_Y;
+      P.vy = 0;
+    }
+
+    // スポーン・移動・衝突
+    nextSpawn -= 1;
+    if (nextSpawn <= 0) spawn();
+    const playerBox = { x: P.x, y: P.y - P.h, w: P.w, h: P.h };
+    entities.forEach((e) => {
+      e.x -= speed;
+      const eBox = { x: e.x, y: e.y - e.h, w: e.w, h: e.h };
+      if (!e.dead && hit(playerBox, eBox)) {
+        if (e.type === "scam" || e.type === "rug") {
+          gameOver = true;
+        } else if (e.type === "good") {
+          score += 50;
+          e.dead = true;
+        } else if (e.type === "bad") {
+          score = Math.max(0, score - 80);
+          flash = 12;
+          e.dead = true;
+        } else if (e.type === "coin") {
+          score += 15;
+          e.dead = true;
+        }
+      }
+    });
+    entities = entities.filter((e) => !e.dead && e.x > -40);
+
+    // 描画
+    ctx.clearRect(0, 0, 560, 190);
+    ctx.fillStyle = c.bg;
+    ctx.fillRect(0, 0, 560, 190);
+    if (flash > 0) {
+      ctx.fillStyle = "rgba(229, 72, 77, 0.18)";
+      ctx.fillRect(0, 0, 560, 190);
+      flash -= 1;
+    }
+    ctx.strokeStyle = c.ground;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, GROUND_Y + 2);
+    ctx.lineTo(560, GROUND_Y + 2);
+    ctx.stroke();
+
+    // プレイヤー(₳コインの勇者)
+    ctx.font = "26px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = c.accent;
+    ctx.beginPath();
+    ctx.arc(P.x + P.w / 2, P.y - P.h / 2, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 18px sans-serif";
+    ctx.fillText("₳", P.x + P.w / 2, P.y - P.h / 2 + 6);
+
+    // エンティティ
+    entities.forEach((e) => {
+      if (e.type === "coin") {
+        ctx.fillStyle = "#f5b90a";
+        ctx.beginPath();
+        ctx.arc(e.x + e.w / 2, e.y - e.h / 2, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#7a5700";
+        ctx.font = "bold 12px sans-serif";
+        ctx.fillText("₳", e.x + e.w / 2, e.y - e.h / 2 + 4);
+      } else {
+        ctx.font = "22px sans-serif";
+        ctx.fillText(e.icon, e.x + e.w / 2, e.y - 4);
+      }
+    });
+
+    hud.textContent = `SCORE ${Math.floor(score)}　BEST ${best}`;
+
+    if (gameOver) {
+      running = false;
+      const finalScore = Math.floor(score);
+      if (finalScore > best) {
+        best = finalScore;
+        try {
+          localStorage.setItem("wc_runner_best", String(best));
+        } catch (e) {}
+      }
+      ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+      ctx.fillRect(0, 0, 560, 190);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 22px sans-serif";
+      ctx.fillText("GAME OVER", 280, 80);
+      ctx.font = "14px sans-serif";
+      ctx.fillText(`スコア ${finalScore} / ベスト ${best}`, 280, 108);
+      ctx.fillText("タップでもう一回!", 280, 132);
+      hud.textContent = `SCORE ${finalScore}　BEST ${best}`;
+      return;
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // 初期画面
+  const c0 = themeColors();
+  ctx.fillStyle = c0.bg;
+  ctx.fillRect(0, 0, 560, 190);
+  ctx.fillStyle = c0.text;
+  ctx.textAlign = "center";
+  ctx.font = "bold 20px sans-serif";
+  ctx.fillText("🏃 ADAランナー", 280, 84);
+  ctx.font = "13px sans-serif";
+  ctx.fillText("タップ / スペースキーでスタート&ジャンプ", 280, 112);
+
+  canvas.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    jump();
+  });
+  canvas.addEventListener("keydown", (e) => {
+    if (e.code === "Space" || e.code === "ArrowUp") {
+      e.preventDefault();
+      jump();
+    }
+  });
+  return box;
+}
+
 function slotStatLine(pairs) {
   const wrap = document.createElement("div");
   wrap.className = "slot-stats";
@@ -660,6 +893,17 @@ function renderNode(nodeId, opts = {}) {
       "bot"
     );
     appendBubble(battle, "bot");
+    clearOptions();
+    renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+    return;
+  }
+
+  if (node.type === "runner-game") {
+    appendBubble(
+      "🏃 **ADAランナー**! ₳の勇者を走らせよう。**🎣スキャムと🧻ラグはジャンプでよける**(当たると終了)。**🟢いい提案は取ると+50点、🔴わるい提案は取ると-80点**(スルーが正解)。₳コインは+15点。どこまで走れるかな?",
+      "bot"
+    );
+    appendBubble(buildRunnerGame(), "bot");
     clearOptions();
     renderNavButtons({ showBack: state.history.length > 0, showHome: true });
     return;

@@ -9,7 +9,14 @@ export default {
         { label: "🎰 SPOスロット", next: "game-slot-pool" },
         { label: "🎰 DRepスロット", next: "game-slot-drep" },
         { label: "⚔️ SPOカードバトル", next: "game-battle" },
+        { label: "🏃 ADAランナー", next: "game-runner" },
       ],
+    },
+
+    "game-runner": {
+      type: "runner-game",
+      label: "🏃 ADAランナー",
+      keywords: ["ランナー", "横スクロール"],
     },
 
     "game-battle": {

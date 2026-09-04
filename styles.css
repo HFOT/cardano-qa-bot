@@ -1003,6 +1003,42 @@ body {
   background: linear-gradient(135deg, #ff6b4a, #d3323e);
 }
 
+.game-icon-runner {
+  background: linear-gradient(135deg, #21d4c2, #0a9c76);
+}
+
+/* ---------- 🏃 ADAランナー ---------- */
+
+.runner-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.runner-canvas {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+  display: block;
+}
+
+.runner-canvas:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.runner-hud {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  text-align: right;
+}
+
 /* ---------- ⚔️ SPOカードバトル ---------- */
 
 .battle-box {
