@@ -1,5 +1,6 @@
 import walletContent from "./content/wallet.js";
 import spoContent from "./content/spo.js";
+import drepContent from "./content/drep.js";
 
 const HOME_NODE_ID = "home";
 
@@ -9,6 +10,7 @@ const HOME_NODE = {
   options: [
     { label: "ウォレット操作について", next: "wallet-root" },
     { label: "SPO(プール)選びについて", next: "spo-root" },
+    { label: "DRep選びについて", next: "drep-root" },
   ],
 };
 
@@ -16,7 +18,8 @@ function mergeNodes() {
   return Object.assign(
     { [HOME_NODE_ID]: HOME_NODE },
     walletContent.nodes,
-    spoContent.nodes
+    spoContent.nodes,
+    drepContent.nodes
   );
 }
 
