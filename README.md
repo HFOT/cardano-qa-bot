@@ -1,0 +1,43 @@
+# Cardano Q&A ボット
+
+Cardano初心者向けに、ウォレット操作・SPO(プール)選び・DRep選びの3トピックを
+チャット形式(ボタン選択+自由文入力)で案内する、完全静的なQ&Aボットです。
+AI APIは使用していません。回答内容はすべて `content/*.js` に決定木として記述されています。
+
+全体で96ノード(選択肢20 + 回答74 + 推薦2)。ウォレット39ノード(7カテゴリ)、
+SPO選び31ノード(5カテゴリ+リレー健全性ランキング連携)、DRep選び26ノード(5カテゴリ+TARGET15連携)。
+
+SPO推薦とDRep推薦の2機能だけは例外的に外部サイトへ読み取り専用のfetchを行う
+(`hfot.github.io/cardano-relay-health` と `hfot.github.io/drep-terminal-v6`。
+どちらも自分が運営する無料・APIキー不要の公開ページ)。それ以外はAI・外部API不使用の完全静的動作。
+
+## ローカルで動かす
+
+ESモジュール(`import`/`export`)を使っているため、`index.html`を直接ダブルクリックして
+開くとブラウザのCORS制限で動作しません。簡易HTTPサーバーを立ててアクセスしてください。
+
+```bash
+npx serve .
+# または
+python -m http.server 8000
+```
+
+表示されたURL(例: `http://localhost:3000`)をブラウザで開いてください。
+
+## デプロイ(GitHub Pages)
+
+1. このリポジトリをGitHubにpushする
+2. リポジトリの Settings → Pages → Branch で `master`(または`main`) / `/ (root)` を選択する
+3. 数分後に `https://<username>.github.io/<repo名>/` で公開される
+
+## コンテンツの追加・編集
+
+- 既存トピックの回答を直接編集する場合は `content/wallet.js` / `content/spo.js` / `content/drep.js` を編集する
+- 新しいトピックを追加する場合:
+  1. `content/<topic>.js` を作成し、`export default { nodes: { "<topic>-root": {...}, ... } }` の形で決定木を書く
+  2. `app.js` の先頭で `import <topic>Content from "./content/<topic>.js";` を追加する
+  3. `mergeNodes()` の `Object.assign(...)` に `<topic>Content.nodes` を追加する
+  4. `HOME_NODE.options` に `{ label: "表示名", next: "<topic>-root" }` を追加する
+- ノードの種類は5つ: `choice`(選択肢分岐)/ `message`(一言だけの中継)/ `answer`(終端の回答、`keywords`で自由文検索に対応)/ `recommend-pool`(SPO健全性ランキングからのランダム推薦)/ `recommend-drep`(DRep TARGET15ランダム推薦)
+- `keywords`には空白を含まない単語を登録すること(照合は`ユーザー入力.includes(keyword)`のため、空白入りの複合キーワードは短い入力とマッチしない)
+- `hfot.github.io`側のページ構造(埋め込みデータの変数名やフィールド名)が変わると、SPO/DRep推薦機能が壊れる。壊れた場合はまず`errorText`のフォールバックが出ることを確認し、`app.js`の`fetchRelayHealthPools`/`fetchDrepTarget15Candidates`内のマーカー文字列(`"const data="` / `"const DB"`)とフィールド名を実際のページに合わせて更新する
