@@ -1,9 +1,9 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=22";
-import spoContent from "./content/spo.js?v=22";
-import drepContent from "./content/drep.js?v=22";
-import scamContent from "./content/scam.js?v=22";
-import valueContent from "./content/value.js?v=22";
+import walletContent from "./content/wallet.js?v=23";
+import spoContent from "./content/spo.js?v=23";
+import drepContent from "./content/drep.js?v=23";
+import scamContent from "./content/scam.js?v=23";
+import valueContent from "./content/value.js?v=23";
 
 const HOME_NODE_ID = "home";
 
@@ -604,25 +604,46 @@ const chartPanel = document.getElementById("chart-panel");
 const chartBox = document.getElementById("chart-box");
 const chartMeta = document.getElementById("chart-meta");
 const chartCache = {};
-let chartDays = 30;
+let chartDays = "30";
 
 async function fetchChartPrices(days) {
   if (chartCache[days]) return chartCache[days];
+  if (days === "max") {
+    // CoinGecko無料枠は過去365日まで。全期間はBinanceの週足(2018年〜・USDT建て)を使う
+    const res = await fetch(
+      "https://api.binance.com/api/v3/klines?symbol=ADAUSDT&interval=1w&limit=1000"
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length < 2) return null;
+    chartCache[days] = {
+      prices: data.map((k) => [k[0], parseFloat(k[4])]),
+      currency: "usd",
+      note: "2018年〜・米ドル建て(Binance週足)",
+    };
+    return chartCache[days];
+  }
   const res = await fetch(
     "https://api.coingecko.com/api/v3/coins/cardano/market_chart?vs_currency=jpy&days=" + days
   );
   if (!res.ok) return null;
   const data = await res.json();
   if (!data || !Array.isArray(data.prices) || data.prices.length < 2) return null;
-  chartCache[days] = data.prices;
-  return data.prices;
+  chartCache[days] = { prices: data.prices, currency: "jpy", note: null };
+  return chartCache[days];
 }
 
 function fmtJpyPrice(v) {
   return "¥" + v.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-function renderChart(prices) {
+function fmtUsdPrice(v) {
+  return "$" + (v < 1 ? v.toFixed(4) : v.toFixed(2));
+}
+
+function renderChart(entry) {
+  const prices = entry.prices;
+  const fmt = entry.currency === "usd" ? fmtUsdPrice : fmtJpyPrice;
   const W = 560;
   const H = 150;
   const PAD = 6;
@@ -657,9 +678,9 @@ function renderChart(prices) {
   const chg = ((last - first) / first) * 100;
   chartMeta.replaceChildren();
   const parts = [
-    ["現在", fmtJpyPrice(last)],
-    ["高値", fmtJpyPrice(max)],
-    ["安値", fmtJpyPrice(min)],
+    ["現在", fmt(last)],
+    ["高値", fmt(max)],
+    ["安値", fmt(min)],
   ];
   parts.forEach(([label, value]) => {
     const span2 = document.createElement("span");
@@ -670,22 +691,27 @@ function renderChart(prices) {
   chgSpan.className = chg >= 0 ? "chg-up" : "chg-down";
   chgSpan.textContent = "期間 " + (chg >= 0 ? "+" : "") + chg.toFixed(1) + "%";
   chartMeta.appendChild(chgSpan);
+  if (entry.note) {
+    const noteSpan = document.createElement("span");
+    noteSpan.textContent = entry.note;
+    chartMeta.appendChild(noteSpan);
+  }
 }
 
 async function showChart(days) {
   chartDays = days;
   document.querySelectorAll(".chart-tab").forEach((b) => {
-    b.classList.toggle("active", Number(b.dataset.days) === days);
+    b.classList.toggle("active", b.dataset.days === days);
   });
   chartBox.textContent = "読み込み中…";
-  const prices = await fetchChartPrices(days);
+  const entry = await fetchChartPrices(days);
   if (days !== chartDays) return; // タブが先に切り替わっていたら破棄
-  if (!prices) {
+  if (!entry) {
     chartBox.textContent = "チャートを取得できませんでした";
     chartMeta.replaceChildren();
     return;
   }
-  renderChart(prices);
+  renderChart(entry);
 }
 
 chartBtn.addEventListener("click", () => {
@@ -696,7 +722,7 @@ chartBtn.addEventListener("click", () => {
 });
 
 document.querySelectorAll(".chart-tab").forEach((b) => {
-  b.addEventListener("click", () => showChart(Number(b.dataset.days)));
+  b.addEventListener("click", () => showChart(b.dataset.days));
 });
 
 // ---- ライト/ダーク手動切替(未設定時はOS設定に従う) ----
