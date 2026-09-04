@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="ADA price calculator">
+  <title>ADA price calculator</title>
+  <defs>
+    <linearGradient id="g" x1="5" y1="4" x2="27" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3d7bff"/>
+      <stop offset="1" stop-color="#21d4c2"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7.5" fill="#0a0726"/>
+  <!-- The ADA symbol reduced to strokes: an A with a double crossbar. -->
+  <path d="M16 7 L9.5 25 M16 7 L22.5 25" fill="none" stroke="url(#g)" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M11.4 17.5h9.2 M10.2 21h11.6" fill="none" stroke="url(#g)" stroke-width="2" stroke-linecap="round"/>
+</svg>

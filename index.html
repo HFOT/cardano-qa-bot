@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <title>What's Cardano?</title>
-<link rel="stylesheet" href="styles.css?v=10">
+<link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
   <div id="chat-app">
@@ -30,37 +30,52 @@
       </a>
       <nav id="promo-apps" aria-label="Governance Skill のツール">
         <a class="app" href="https://hfot.github.io/spo-onchain-alive/" target="_blank" rel="noopener">
-          <img class="app-icon" src="icons/alive.svg" alt="" width="54" height="54">
-          <span class="app-name">Onchain Alive</span>
+          <img class="app-icon" src="icons/alive.svg" alt="" width="48" height="48">
+          <span class="app-text">
+            <span class="app-name">Onchain Alive</span>
+            <span class="app-desc">採点を、生き物として見る。</span>
+          </span>
         </a>
         <a class="app" href="https://hfot.github.io/cardano-relay-health/" target="_blank" rel="noopener">
-          <img class="app-icon" src="icons/relay.svg" alt="" width="54" height="54">
-          <span class="app-name">Relay Health</span>
+          <img class="app-icon" src="icons/relay.svg" alt="" width="48" height="48">
+          <span class="app-text">
+            <span class="app-name">Relay Health</span>
+            <span class="app-desc">応答したものだけを、採点する。</span>
+          </span>
         </a>
         <a class="app" href="https://hfot.github.io/cardano-two-delegations/" target="_blank" rel="noopener">
-          <img class="app-icon" src="icons/deleg.svg" alt="" width="54" height="54">
-          <span class="app-name">2つの委任</span>
+          <img class="app-icon" src="icons/deleg.svg" alt="" width="48" height="48">
+          <span class="app-text">
+            <span class="app-name">2つの委任</span>
+            <span class="app-desc">読むのをやめて、動かしてみる。</span>
+          </span>
         </a>
         <a class="app" href="https://hfot.github.io/cignal-radar/cignal-signal-v2.html" target="_blank" rel="noopener">
-          <img class="app-icon" src="icons/signal.svg" alt="" width="54" height="54">
-          <span class="app-name">CIGNAL Signal</span>
+          <img class="app-icon" src="icons/signal.svg" alt="" width="48" height="48">
+          <span class="app-text">
+            <span class="app-name">CIGNAL Signal</span>
+            <span class="app-desc">貼るだけで、議論の伸びしろを見る。</span>
+          </span>
         </a>
+        <div class="app app-calc">
+          <img class="app-icon" src="icons/ada.svg" alt="" width="48" height="48">
+          <span class="app-text">
+            <span class="app-name" id="ada-price" aria-live="polite">ADA ¥–</span>
+            <span class="app-desc calc-row">
+              <input id="ada-amount" type="number" inputmode="decimal" placeholder="保有枚数" min="0" step="any">
+              <span id="ada-total">= ¥–</span>
+            </span>
+          </span>
+        </div>
       </nav>
     </section>
     <div id="chat-log" role="log" aria-live="polite"></div>
     <div id="chat-options"></div>
-    <div id="price-bar">
-      <span id="ada-price" aria-live="polite">ADA ¥–</span>
-      <span class="calc">
-        <input id="ada-amount" type="number" inputmode="decimal" placeholder="保有枚数" min="0" step="any">
-        <span id="ada-total">= ¥–</span>
-      </span>
-    </div>
     <form id="free-text-form">
       <input id="free-text-input" type="text" placeholder="気になることを入力(例: 手数料、シードフレーズ)" autocomplete="off">
       <button type="submit">送信</button>
     </form>
   </div>
-  <script type="module" src="app.js?v=10"></script>
+  <script type="module" src="app.js?v=11"></script>
 </body>
 </html>
