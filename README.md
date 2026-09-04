@@ -43,4 +43,5 @@ python -m http.server 8000
   4. `HOME_NODE.options` に `{ label: "表示名", next: "<topic>-root" }` を追加する
 - ノードの種類は5つ: `choice`(選択肢分岐)/ `message`(一言だけの中継)/ `answer`(終端の回答、`keywords`で自由文検索に対応)/ `recommend-pool`(SPO健全性ランキングからのランダム推薦)/ `recommend-drep`(DRep TARGET15ランダム推薦)
 - `keywords`には空白を含まない単語を登録すること(照合は`ユーザー入力.includes(keyword)`のため、空白入りの複合キーワードは短い入力とマッチしない)
+- **デプロイ時の約束**: CSS/JS/contentを変更したら、`index.html`の`?v=`と`app.js`冒頭のimportの`?v=`を同じ番号で1つ上げること。これを忘れると、閲覧者のブラウザキャッシュで「新しいHTML+古いCSS/JS」が混ざり表示が崩れる
 - `hfot.github.io`側のページ構造(埋め込みデータの変数名やフィールド名)が変わると、SPO/DRep推薦機能が壊れる。壊れた場合はまず`errorText`のフォールバックが出ることを確認し、`app.js`の`fetchRelayHealthPools`/`fetchDrepTarget15Candidates`内のマーカー文字列(`"const data="` / `"const DB"` / `"total_vp":`)とフィールド名を実際のページに合わせて更新する

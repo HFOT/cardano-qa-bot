@@ -1,7 +1,8 @@
-import walletContent from "./content/wallet.js";
-import spoContent from "./content/spo.js";
-import drepContent from "./content/drep.js";
-import scamContent from "./content/scam.js";
+// デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
+import walletContent from "./content/wallet.js?v=8";
+import spoContent from "./content/spo.js?v=8";
+import drepContent from "./content/drep.js?v=8";
+import scamContent from "./content/scam.js?v=8";
 
 const HOME_NODE_ID = "home";
 
