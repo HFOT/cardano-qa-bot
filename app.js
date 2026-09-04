@@ -30,6 +30,8 @@ const state = {
   history: [],
 };
 
+let recommendSeq = 0;
+
 const chatLog = document.getElementById("chat-log");
 const chatOptions = document.getElementById("chat-options");
 const freeTextForm = document.getElementById("free-text-form");
@@ -123,10 +125,13 @@ function renderNode(nodeId, opts = {}) {
   if (node.type === "recommend-pool") {
     appendBubble(node.loadingText, "bot");
     clearOptions();
+    const seq = ++recommendSeq;
     fetchRelayHealthPools()
       .then((pools) => {
+        if (seq !== recommendSeq || state.currentNodeId !== nodeId) return;
         if (!pools || pools.length === 0) throw new Error("empty");
         const good = pools.filter((p) => typeof p.score === "number" && p.score >= 85);
+        if (good.length === 0) throw new Error("no qualifying pools");
         const picked = pickRandomN(good, 5);
         const lines = picked.map((p, i) => {
           const ticker = p.ticker || "(Ticker未設定)";
@@ -143,6 +148,7 @@ function renderNode(nodeId, opts = {}) {
         renderNavButtons({ showBack: state.history.length > 0, showHome: true });
       })
       .catch(() => {
+        if (seq !== recommendSeq || state.currentNodeId !== nodeId) return;
         appendBubble(node.errorText, "bot");
         renderNavButtons({ showBack: state.history.length > 0, showHome: true });
       });
