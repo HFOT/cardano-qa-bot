@@ -1838,3 +1838,36 @@ git commit -m "style: Apple/iMessage-inspired visual redesign"
 git add index.html styles.css
 git commit -m "style: hero startup screen + design polish"
 ```
+
+---
+
+### Task 12: デザイン改訂 — 図形削除+スマホ的手軽さ
+
+ユーザーフィードバック(2026-09-04、スクショ付き): 「図形いらないかも。シンプルかつ見やすさ。スマホのような手軽な感じで進める感覚が欲しい」。
+
+**Files:**
+- Modify: `index.html`(ヒーローから図形SVGを削除)
+- Modify: `styles.css`
+
+**制約**: Task 10/11と同一(app.js不変、既存id/class不変、外部リソース禁止、JS禁止)。
+
+- [ ] **Step 1: ヒーローの簡素化**
+1. `#hero-mark`(SVG図形)をindex.htmlから削除、関連CSS(hero-float等)も削除
+2. `#hero-chips`も削除(装飾を減らしシンプルに)
+3. ヒーローは「タイトル+サブタイトル1行」だけのコンパクトな帯にする(padding縮小)
+
+- [ ] **Step 2: メッセンジャー風レイアウト(手軽さの核心)**
+1. `#chat-log > .bubble:first-child { margin-top: auto; }` で会話を下寄せにする(justify-content:flex-endはスクロールを壊すため使わない)。これで最後の発言のすぐ下に選択肢ボタンが来る、LINEやiMessage的な操作感になる
+2. 選択肢ボタンのタップターゲット拡大(min-height 44px、font-size 14px程度)
+3. バブルとボタン群の間隔を詰める
+
+- [ ] **Step 3: 検証**
+- 会話が進むと最新の発言+選択肢が常に画面下部付近にまとまって見える
+- 長い会話でスクロールが正常(上に遡れる)
+- ライト/ダーク、375px、コンソールエラーなし
+
+- [ ] **Step 4: Commit**
+```bash
+git add index.html styles.css
+git commit -m "style: simplify hero, messenger-style bottom-anchored layout"
+```
