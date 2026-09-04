@@ -6,7 +6,7 @@ const HOME_NODE_ID = "home";
 
 const HOME_NODE = {
   type: "choice",
-  text: "こんにちは。Cardano Q&Aボットです。何について知りたいですか?",
+  text: "こんにちは。何について知りたいですか?",
   options: [
     { label: "ウォレット操作について", next: "wallet-root" },
     { label: "SPO(プール)選びについて", next: "spo-root" },
