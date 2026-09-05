@@ -1,11 +1,11 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=28";
-import spoContent from "./content/spo.js?v=28";
-import drepContent from "./content/drep.js?v=28";
-import scamContent from "./content/scam.js?v=28";
-import valueContent from "./content/value.js?v=28";
-import midnightContent from "./content/midnight.js?v=28";
-import gameContent from "./content/game.js?v=28";
+import walletContent from "./content/wallet.js?v=29";
+import spoContent from "./content/spo.js?v=29";
+import drepContent from "./content/drep.js?v=29";
+import scamContent from "./content/scam.js?v=29";
+import valueContent from "./content/value.js?v=29";
+import midnightContent from "./content/midnight.js?v=29";
+import gameContent from "./content/game.js?v=29";
 
 const HOME_NODE_ID = "home";
 
@@ -190,7 +190,13 @@ function appendEmbed(url, title, opts = {}) {
 // ---- 🎰 スロットマシン(3リール・本物の当たり外れ・金貨シャワー) ----
 // リールにはターゲット(プール/DRep)のほか、スキャム・ラグ・DAppsなどが混ざる。
 // ターゲットは必ず1つは出るが、3つ揃うとは限らない。揃ったときだけ実在の1件が開示される。
-const SLOT_FILLERS = ["🎣", "🧻", "📱", "₳", "⭐"];
+const SLOT_FILLERS = [
+  { key: "scam", icon: "🧟", label: "スキャム" },
+  { key: "rug", icon: "🧻", label: "ラグ" },
+  { key: "dapps", icon: "📱", label: "DApps" },
+  { key: "ada", icon: "₳", label: "ADA" },
+  { key: "lucky", icon: "⭐", label: "LUCKY" },
+];
 const SLOT_MISS_LINES = [
   "はずれ! でも₳は1枚も減っていないのでご安心を。",
   "うーん、噛み合わない。もう一回!",
@@ -210,20 +216,50 @@ function coinShower(container, count) {
   }
 }
 
-// config: { getCandidates, target, targetName, reelText, buildResult, errorText }
-// target = ターゲットシンボル(例 "🗳️")
+// リールのマス: 絵文字+文字ラベルの2段表示
+function setReelSymbol(reelEl, symbol) {
+  reelEl.replaceChildren();
+  const icon = document.createElement("span");
+  icon.className = "reel-icon";
+  icon.textContent = symbol.icon;
+  const lbl = document.createElement("span");
+  lbl.className = "reel-label";
+  lbl.textContent = symbol.label;
+  reelEl.appendChild(icon);
+  reelEl.appendChild(lbl);
+}
+
+// config: { getCandidates, target: {icon,label}, reelText, buildResult, errorText }
 function buildSlotMachine(config) {
   const box = document.createElement("div");
-  box.className = "slot-machine";
+  box.className = "slot-machine slot-cabinet";
+  // カジノ風マーキー(看板+点滅ライト)
+  const marquee = document.createElement("div");
+  marquee.className = "slot-marquee";
+  const lightsTop = document.createElement("div");
+  lightsTop.className = "slot-lights";
+  for (let i = 0; i < 14; i++) {
+    const bulb = document.createElement("span");
+    bulb.className = "bulb";
+    bulb.style.animationDelay = (i % 2) * 0.4 + "s";
+    lightsTop.appendChild(bulb);
+  }
+  const marqueeTitle = document.createElement("div");
+  marqueeTitle.className = "slot-marquee-title";
+  marqueeTitle.textContent = "✦ CARDANO SLOTS ✦";
+  marquee.appendChild(lightsTop);
+  marquee.appendChild(marqueeTitle);
+
   const legendEl = document.createElement("div");
   legendEl.className = "slot-legend";
-  legendEl.textContent = config.target + "×3で大当たり! " + config.targetName + "は毎回どこかに必ずいます";
+  legendEl.textContent =
+    config.target.icon + config.target.label + " ×3で大当たり! " + config.target.label + "は毎回どこかに必ずいます";
   const reelsWrap = document.createElement("div");
   reelsWrap.className = "slot-reels";
   const reels = [0, 1, 2].map(() => {
     const r = document.createElement("div");
     r.className = "slot-reel";
-    r.textContent = "?";
+    setReelSymbol(r, { icon: "?", label: "READY" });
     reelsWrap.appendChild(r);
     return r;
   });
@@ -238,6 +274,7 @@ function buildSlotMachine(config) {
   const noteEl = document.createElement("div");
   noteEl.className = "slot-note";
   noteEl.textContent = "※遊びです。委任の推奨ではありません。";
+  box.appendChild(marquee);
   box.appendChild(legendEl);
   box.appendChild(reelsWrap);
   box.appendChild(nameEl);
@@ -264,6 +301,10 @@ function buildSlotMachine(config) {
     return symbols;
   }
 
+  function countKey(outcome, keyOrTarget) {
+    return outcome.filter((s) => s === keyOrTarget || s.key === keyOrTarget).length;
+  }
+
   let spinning = false;
   spinBtn.addEventListener("click", async () => {
     if (spinning) return;
@@ -279,7 +320,7 @@ function buildSlotMachine(config) {
     if (!candidates || candidates.length === 0) {
       reels.forEach((r) => {
         r.className = "slot-reel";
-        r.textContent = "✕";
+        setReelSymbol(r, { icon: "✕", label: "ERROR" });
       });
       resultEl.textContent = config.errorText;
       spinning = false;
@@ -294,8 +335,8 @@ function buildSlotMachine(config) {
 
     function finish() {
       const hits = outcome.filter((s) => s === config.target).length;
-      const scams = outcome.filter((s) => s === "🎣").length;
-      const rugs = outcome.filter((s) => s === "🧻").length;
+      const scams = countKey(outcome, "scam");
+      const rugs = countKey(outcome, "rug");
       if (hits === 3) {
         // 🏆 大当たり: 実在の1件を開示 + 金貨シャワー
         reels.forEach((r) => r.classList.add("aligned", "tier-s"));
@@ -308,7 +349,7 @@ function buildSlotMachine(config) {
         coinShower(box, 5);
         nameEl.textContent = "おしい! あと1つで大当たりだった…!";
       } else if (scams >= 2) {
-        nameEl.textContent = "🎣×" + scams + " スキャム大量発生! DMのリンクは踏まないで!";
+        nameEl.textContent = "🧟×" + scams + " スキャム大量発生! DMのリンクは踏まないで!";
         nameEl.classList.add("slot-name-bad");
       } else if (rugs >= 2) {
         nameEl.textContent = "🧻×" + rugs + " ラグ発生! 敷物ごと持っていかれるところだった…";
@@ -328,11 +369,11 @@ function buildSlotMachine(config) {
         if (stopped[i]) return;
         if (elapsed >= stopAt[i]) {
           stopped[i] = true;
-          r.textContent = outcome[i];
+          setReelSymbol(r, outcome[i]);
           r.className = "slot-reel stopped";
         } else {
           allStopped = false;
-          r.textContent = allSpin[Math.floor(Math.random() * allSpin.length)];
+          setReelSymbol(r, allSpin[Math.floor(Math.random() * allSpin.length)]);
         }
       });
       if (allStopped) {
@@ -1074,8 +1115,7 @@ function renderNode(nodeId, opts = {}) {
             p.ticker !== "N/A"
         );
       },
-      target: "🏊",
-      targetName: "プール",
+      target: { key: "pool", icon: "🏊", label: "POOL" },
       reelText: (p) => "[" + p.ticker + "]",
       buildResult: (p) => {
         const grade = p.score >= 95 ? "S" : "A";
@@ -1091,7 +1131,7 @@ function renderNode(nodeId, opts = {}) {
       errorText: node.errorText,
     });
     appendBubble(
-      "🎰 **SPOスロット**! リールには🏊プールのほかに🎣スキャムや🧻ラグも紛れています。**🏊が3つ揃うと大当たり** — S・Aグレードの実在プールが1つ開示されます:",
+      "🎰 **SPOスロット**! リールには🏊POOLのほかに🧟スキャムや🧻ラグも紛れています。**🏊POOLが3つ揃うと大当たり** — S・Aグレードの実在プールが1つ開示されます:",
       "bot"
     );
     appendBubble(machine, "bot");
@@ -1103,8 +1143,7 @@ function renderNode(nodeId, opts = {}) {
   if (node.type === "slot-drep") {
     const machine = buildSlotMachine({
       getCandidates: async () => fetchDrepTarget15Candidates(),
-      target: "🗳️",
-      targetName: "DRep",
+      target: { key: "drep", icon: "🗳️", label: "DRep" },
       reelText: (d) => d.name || d.id.slice(0, 16) + "…",
       buildResult: (d) => {
         const wrap = document.createElement("div");
@@ -1125,7 +1164,7 @@ function renderNode(nodeId, opts = {}) {
       errorText: node.errorText,
     });
     appendBubble(
-      "🎰 **DRepスロット**! リールには🗳️DRepのほかに🎣スキャムや🧻ラグも紛れています。**🗳️が3つ揃うと大当たり** — 投票力1.5%未満(Target 15)の実在DRepが1人開示されます:",
+      "🎰 **DRepスロット**! リールには🗳️DRepのほかに🧟スキャムや🧻ラグも紛れています。**🗳️DRepが3つ揃うと大当たり** — 投票力1.5%未満(Target 15)の実在DRepが1人開示されます:",
       "bot"
     );
     appendBubble(machine, "bot");
