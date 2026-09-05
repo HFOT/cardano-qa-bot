@@ -1,11 +1,11 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=30";
-import spoContent from "./content/spo.js?v=30";
-import drepContent from "./content/drep.js?v=30";
-import scamContent from "./content/scam.js?v=30";
-import valueContent from "./content/value.js?v=30";
-import midnightContent from "./content/midnight.js?v=30";
-import gameContent from "./content/game.js?v=30";
+import walletContent from "./content/wallet.js?v=31";
+import spoContent from "./content/spo.js?v=31";
+import drepContent from "./content/drep.js?v=31";
+import scamContent from "./content/scam.js?v=31";
+import valueContent from "./content/value.js?v=31";
+import midnightContent from "./content/midnight.js?v=31";
+import gameContent from "./content/game.js?v=31";
 
 const HOME_NODE_ID = "home";
 
@@ -202,6 +202,7 @@ const SLOT_MISS_LINES = [
   "うーん、噛み合わない。ガバナンスと同じですね。",
   "リールの神は気まぐれ。DRepの投票率より読めない。",
   "はずれ。でも大丈夫、あなたのシードフレーズは無事です。",
+  "僕は委任しましぇん!! …と言い張る自由もあります。それが分散です。",
 ];
 const SLOT_JACKPOT_LINES = [
   "3つ揃いました。もう委任変えちゃいましょうかｗｗ(※遊びです)",
@@ -212,6 +213,8 @@ const SLOT_JACKPOT_LINES = [
   "いつ委任するか? 今でしょ! (※ご自身の判断でｗ)",
   "そこに委任はあるんか? …ここにあります。",
   "委任は裏切らない。筋肉と同じで。",
+  "委任は文化だ。— おめでとう、あなたは今日から文化人ｗ",
+  "揃った瞬間だけ饒舌になる台。それがCARDANO SLOTS。",
 ];
 
 function coinShower(container, count) {
