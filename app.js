@@ -7,6 +7,7 @@ import valueContent from "./content/value.js?v=59";
 import midnightContent from "./content/midnight.js?v=59";
 import gameContent from "./content/game.js?v=59";
 import exchangeContent from "./content/exchange.js?v=59";
+import basicsContent from "./content/basics.js?v=59";
 
 const HOME_NODE_ID = "home";
 
@@ -14,6 +15,7 @@ const HOME_NODE = {
   type: "choice",
   text: "こんにちは。何について知りたいですか?",
   options: [
+    { label: "Cardanoって結局なに?", next: "basics-root" },
     { label: "ADA取扱取引所と入出庫の注意点", next: "exchange-root" },
     { label: "ウォレット操作について", next: "wallet-root" },
     { label: "SPO(プール)選びについて", next: "spo-root" },
@@ -34,7 +36,8 @@ function mergeNodes() {
     valueContent.nodes,
     midnightContent.nodes,
     gameContent.nodes,
-    exchangeContent.nodes
+    exchangeContent.nodes,
+    basicsContent.nodes
   );
 }
 
