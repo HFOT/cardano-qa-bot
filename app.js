@@ -1,11 +1,11 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=31";
-import spoContent from "./content/spo.js?v=31";
-import drepContent from "./content/drep.js?v=31";
-import scamContent from "./content/scam.js?v=31";
-import valueContent from "./content/value.js?v=31";
-import midnightContent from "./content/midnight.js?v=31";
-import gameContent from "./content/game.js?v=31";
+import walletContent from "./content/wallet.js?v=32";
+import spoContent from "./content/spo.js?v=32";
+import drepContent from "./content/drep.js?v=32";
+import scamContent from "./content/scam.js?v=32";
+import valueContent from "./content/value.js?v=32";
+import midnightContent from "./content/midnight.js?v=32";
+import gameContent from "./content/game.js?v=32";
 
 const HOME_NODE_ID = "home";
 
@@ -203,6 +203,12 @@ const SLOT_MISS_LINES = [
   "リールの神は気まぐれ。DRepの投票率より読めない。",
   "はずれ。でも大丈夫、あなたのシードフレーズは無事です。",
   "僕は委任しましぇん!! …と言い張る自由もあります。それが分散です。",
+  "回すなよ! 絶対回すなよ! (※回してください)",
+  "投票率が上がらないの、なんでだろう〜。",
+  "聞いてないよぉ…(委任解除されたSPOの心の声)",
+  "同情するなら委任くれ。(プールの本音)",
+  "この台、失敗しないので。…今、外しましたけど。",
+  "さっき流れてたプール名、クセがすごい!",
 ];
 const SLOT_JACKPOT_LINES = [
   "3つ揃いました。もう委任変えちゃいましょうかｗｗ(※遊びです)",
@@ -215,6 +221,13 @@ const SLOT_JACKPOT_LINES = [
   "委任は裏切らない。筋肉と同じで。",
   "委任は文化だ。— おめでとう、あなたは今日から文化人ｗ",
   "揃った瞬間だけ饒舌になる台。それがCARDANO SLOTS。",
+  "安心してください、委任してますよ。",
+  "あなたはもう、委任している。",
+  "委任にコミットする。",
+  "じぇじぇじぇ! 3つ揃った!",
+  "委任、1、2、3、ダー!",
+  "委任は力なり。",
+  "ガバナンスは会議室で起きてるんじゃない。オンチェーンで起きてるんだ!",
 ];
 
 function coinShower(container, count) {
