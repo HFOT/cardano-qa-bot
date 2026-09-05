@@ -53,9 +53,18 @@ basics-root  「Cardanoって結局なに?」
 解説本文を `text` に、送り先を `options` に1件だけ置く。
 
 エンジンは「本文 → ボタン → 戻る/トップ」の順に描画するため、これで意図どおり動く。
-**`app.js` は変更しない**（既存の「エンジン関数は触らない」方針を守る）。
+**`renderNode` などのエンジン関数には手を入れない**（既存の方針を守る）。
 
 送客先を持たない `basics-who` のみ `type: "answer"` とする。
+
+### app.js への登録（3箇所）
+
+トピック追加に伴う定型の配線のみ。エンジンのロジックは変えない。
+
+1. 冒頭の import に `basicsContent` を追加（`?v=` は他と同じ番号）
+2. `mergeNodes()` の `Object.assign` に `basicsContent.nodes` を追加
+3. `HOME_NODE.options` の**先頭**に
+   `{ label: "Cardanoって結局なに?", next: "basics-root" }` を追加
 
 ## 自由入力
 
