@@ -2240,10 +2240,11 @@ button.battle-stat:hover {
     justify-content: flex-start;
     gap: 9px;
     padding: 2px 14px 10px;
-    /* 画面が短い端末では入りきらずスクロールになる。
-       下端をフェードさせ「切れている」ではなく「続きがある」に見せる */
-    mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
-    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+    /* 画面が短い端末では入りきらずスクロールになるので、下端に影を敷いて
+       「続きがある」ことを示す。
+       mask は使わないこと: 子孫を丸ごと切り抜くため、この中にある
+       チャートのモーダル(position:fixed)まで promo の枠で切られる */
+    box-shadow: inset 0 -16px 14px -14px rgba(0, 0, 0, 0.22);
   }
 
   #promo-head {
