@@ -1,12 +1,12 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=44";
-import spoContent from "./content/spo.js?v=44";
-import drepContent from "./content/drep.js?v=44";
-import scamContent from "./content/scam.js?v=44";
-import valueContent from "./content/value.js?v=44";
-import midnightContent from "./content/midnight.js?v=44";
-import gameContent from "./content/game.js?v=44";
-import exchangeContent from "./content/exchange.js?v=44";
+import walletContent from "./content/wallet.js?v=49";
+import spoContent from "./content/spo.js?v=49";
+import drepContent from "./content/drep.js?v=49";
+import scamContent from "./content/scam.js?v=49";
+import valueContent from "./content/value.js?v=49";
+import midnightContent from "./content/midnight.js?v=49";
+import gameContent from "./content/game.js?v=49";
+import exchangeContent from "./content/exchange.js?v=49";
 
 const HOME_NODE_ID = "home";
 

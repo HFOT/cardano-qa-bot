@@ -2234,7 +2234,63 @@ button.battle-stat:hover {
   #promo {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    max-height: 44dvh;
+    max-height: 54dvh;
+    /* 中央寄せのままだと、あふれた分が上にはみ出してスクロールで戻れず、
+       先頭のガバナンスSkillカードが上端で切れる。上寄せにして必ず届くようにする */
+    justify-content: flex-start;
+    gap: 9px;
+    padding: 2px 14px 10px;
+    /* 画面が短い端末では入りきらずスクロールになる。
+       下端をフェードさせ「切れている」ではなく「続きがある」に見せる */
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+  }
+
+  #promo-head {
+    padding: 8px 12px;
+  }
+
+  /* ゲーム列(2段)はプロモの自然高の大半を占め、max-height を超えて
+     下端のラベルが切れる。段の形は保ったまま一回り小さくする */
+  #game-row {
+    gap: clamp(8px, 2.6vw, 16px);
+  }
+
+  .game-row-standard {
+    gap: clamp(6px, 1.8vw, 14px);
+  }
+
+  .game-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 18px;
+  }
+
+  .game-app {
+    gap: 4px;
+  }
+
+  .game-app .app-name {
+    font-size: 10px;
+  }
+
+  /* 620px 以下は上罫線+バッジの縦積みレイアウト(1319行)なので、
+     そちらの形は保ったまま高さだけ詰める */
+  .game-row-featured {
+    min-height: 0;
+    padding-top: 13px;
+  }
+
+  #price-card {
+    padding: 8px 12px;
+  }
+
+  /* 選択肢は数が多いので一回り小さく(横幅は文字量ぶんあるので押しやすさは保てる) */
+  .option-btn {
+    padding: 7px 14px;
+    min-height: 40px;
+    font-size: 13px;
   }
 
   #chat-log {
