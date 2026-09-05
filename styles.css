@@ -1190,8 +1190,9 @@ body {
 
 #game-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: clamp(16px, 4vw, 28px);
+  gap: clamp(10px, 2.6vw, 22px);
 }
 
 .game-app {
@@ -1246,6 +1247,160 @@ body {
 
 .game-icon-runner {
   background: linear-gradient(135deg, #21d4c2, #0a9c76);
+}
+
+.game-icon-gatekeeper {
+  background: linear-gradient(135deg, #172445, #087cff 62%, #20d3b0);
+  box-shadow: 0 3px 16px rgba(8, 124, 255, 0.34);
+}
+
+/* ---------- 🛡 Exchange Gatekeeper ---------- */
+
+.gatekeeper {
+  --gate-blue: #31a8ff;
+  --gate-green: #35e2b4;
+  --gate-red: #ff6376;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(80, 185, 255, 0.28);
+  border-radius: 18px;
+  color: #edf8ff;
+  background:
+    linear-gradient(rgba(43, 153, 225, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43, 153, 225, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 82% 0, rgba(24, 131, 255, 0.2), transparent 38%),
+    #071222;
+  background-size: 22px 22px, 22px 22px, auto, auto;
+  box-shadow: 0 22px 60px rgba(0, 18, 45, 0.28);
+}
+
+.gatekeeper-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(83, 190, 255, 0.18);
+  background: rgba(3, 13, 28, 0.82);
+}
+
+.gatekeeper-brand { display: flex; align-items: center; gap: 9px; }
+.gatekeeper-brand > span:last-child { display: flex; flex-direction: column; gap: 1px; }
+.gatekeeper-brand strong { font-size: 11px; letter-spacing: 0.13em; }
+.gatekeeper-brand small { color: rgba(182, 224, 255, 0.56); font-size: 8px; letter-spacing: 0.16em; }
+
+.gatekeeper-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  clip-path: polygon(50% 0, 92% 16%, 86% 72%, 50% 100%, 14% 72%, 8% 16%);
+  color: #04111f;
+  background: linear-gradient(145deg, #71d2ff, #2be2ac);
+  font-weight: 950;
+}
+
+.gatekeeper-score {
+  color: #9edcff;
+  font: 700 9px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.gatekeeper-progress { height: 3px; background: rgba(101, 194, 255, 0.09); }
+.gatekeeper-progress span { display: block; height: 100%; background: linear-gradient(90deg, var(--gate-blue), var(--gate-green)); transition: width 0.3s ease; box-shadow: 0 0 14px var(--gate-blue); }
+
+.gatekeeper-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 420px;
+  padding: 20px;
+}
+
+.gatekeeper-case-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.gatekeeper-badge, .gatekeeper-risk {
+  padding: 4px 8px;
+  border: 1px solid rgba(69, 181, 255, 0.28);
+  border-radius: 999px;
+  color: #8ed5ff;
+  background: rgba(20, 113, 181, 0.12);
+  font: 800 8px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: 0.12em;
+}
+.gatekeeper-risk { color: #ff91a0; border-color: rgba(255, 99, 118, 0.32); background: rgba(255, 99, 118, 0.09); }
+.gatekeeper-body h3 { margin: 1px 0 0; color: #fff; font-size: clamp(18px, 4vw, 24px); letter-spacing: 0.02em; }
+
+.gatekeeper-fields { display: grid; gap: 1px; overflow: hidden; border: 1px solid rgba(97, 193, 255, 0.16); border-radius: 11px; background: rgba(91, 183, 255, 0.12); }
+.gatekeeper-fields > div { display: grid; grid-template-columns: minmax(92px, 0.32fr) 1fr; gap: 10px; align-items: start; padding: 10px 12px; background: rgba(3, 14, 30, 0.88); }
+.gatekeeper-fields span { color: rgba(169, 217, 246, 0.66); font-size: 10px; }
+.gatekeeper-fields code { color: #e9f7ff; font: 650 10px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
+.gatekeeper-prompt { margin: 2px 0 0; color: #fff; font-size: 14px; font-weight: 800; }
+
+.gatekeeper-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.gatekeeper-action, .gatekeeper-next {
+  appearance: none;
+  border: 1px solid rgba(115, 205, 255, 0.26);
+  border-radius: 10px;
+  color: #eefaff;
+  background: rgba(16, 55, 87, 0.72);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+.gatekeeper-action { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; }
+.gatekeeper-action span { font: 900 15px/1 ui-monospace, monospace; }
+.gatekeeper-action.is-send { border-color: rgba(53, 226, 180, 0.3); }
+.gatekeeper-action.is-stop { border-color: rgba(255, 99, 118, 0.36); }
+.gatekeeper-action:hover:not(:disabled), .gatekeeper-next:hover { transform: translateY(-1px); border-color: #6bd1ff; }
+.gatekeeper-action:disabled { cursor: default; opacity: 0.48; }
+.gatekeeper-action.is-answer { opacity: 1; color: #031810; border-color: var(--gate-green); background: var(--gate-green); box-shadow: 0 0 20px rgba(53, 226, 180, 0.22); }
+.gatekeeper-action.is-wrong { opacity: 1; border-color: var(--gate-red); background: rgba(255, 99, 118, 0.28); }
+
+.gatekeeper-result { display: none; padding: 12px 14px; border-radius: 11px; font-size: 11px; line-height: 1.55; }
+.gatekeeper-result.is-correct, .gatekeeper-result.is-wrong { display: flex; flex-direction: column; gap: 7px; }
+.gatekeeper-result.is-correct { border: 1px solid rgba(53, 226, 180, 0.35); background: rgba(53, 226, 180, 0.09); }
+.gatekeeper-result.is-wrong { border: 1px solid rgba(255, 99, 118, 0.38); background: rgba(255, 99, 118, 0.09); }
+.gatekeeper-result strong { color: #fff; letter-spacing: 0.04em; }
+.gatekeeper-result p { margin: 0; color: rgba(229, 246, 255, 0.86); }
+.gatekeeper-result small { color: #8fd7ff; }
+.gatekeeper-next { align-self: flex-end; min-width: 150px; margin-top: 2px; padding: 9px 13px; background: linear-gradient(135deg, #087cff, #0eaaa8); }
+.gatekeeper-next.is-sent { color: #041710; background: var(--gate-green); }
+.gatekeeper-seal { display: grid; place-items: center; align-self: center; width: 82px; height: 82px; margin-top: 22px; border: 2px solid var(--gate-green); border-radius: 50%; color: var(--gate-green); font: 950 26px/1 ui-monospace, monospace; box-shadow: 0 0 34px rgba(53, 226, 180, 0.2), inset 0 0 22px rgba(53, 226, 180, 0.08); }
+.gatekeeper-rank-name { align-self: center; margin: -8px 0 0; color: var(--gate-green); font: 850 11px/1 ui-monospace, monospace; letter-spacing: 0.16em; }
+.gatekeeper-rank-copy { align-self: center; max-width: 390px; margin: 0; color: rgba(220, 242, 255, 0.8); font-size: 11px; line-height: 1.55; text-align: center; }
+.gatekeeper-body > .gatekeeper-finish-score { align-self: center; margin: -4px 0 0; color: #92dcff; font: 800 12px/1 ui-monospace, monospace; letter-spacing: 0.12em; }
+.gatekeeper-finish-note { margin: 0; padding: 12px; border: 1px solid rgba(99, 192, 255, 0.16); border-radius: 10px; color: rgba(215, 239, 255, 0.76); background: rgba(2, 13, 28, 0.55); font-size: 11px; line-height: 1.55; }
+.gatekeeper-cleared { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.gatekeeper-cleared span { padding: 4px 7px; border-radius: 999px; color: var(--gate-green); background: rgba(53, 226, 180, 0.09); font: 750 8px/1 ui-monospace, monospace; }
+.gatekeeper-cleared span.is-locked { color: var(--gate-red); background: rgba(255, 99, 118, 0.1); }
+.gatekeeper-transfer-status { align-self: flex-start; padding: 5px 9px; border: 1px solid rgba(255, 190, 72, 0.4); border-radius: 999px; color: #ffd37b; background: rgba(255, 176, 38, 0.1); font: 800 9px/1 ui-monospace, monospace; letter-spacing: 0.12em; }
+.gatekeeper-transfer-card { display: grid; gap: 1px; overflow: hidden; border: 1px solid rgba(91, 194, 255, 0.2); border-radius: 12px; background: rgba(91, 194, 255, 0.13); }
+.gatekeeper-transfer-card > div { display: grid; grid-template-columns: 90px 1fr; gap: 12px; padding: 11px 12px; background: rgba(3, 14, 30, 0.9); }
+.gatekeeper-transfer-card span { color: rgba(173, 220, 247, 0.65); font-size: 10px; }
+.gatekeeper-transfer-card code { color: #fff; font: 700 10px/1.5 ui-monospace, monospace; overflow-wrap: anywhere; }
+.gatekeeper-transfer-caution { margin: 0; padding: 10px 12px; border-left: 3px solid #ffc354; color: rgba(240, 247, 252, 0.85); background: rgba(255, 177, 50, 0.08); font-size: 11px; line-height: 1.5; }
+.gatekeeper-transfer-actions { display: grid; grid-template-columns: 1fr 1.25fr; gap: 8px; margin-top: auto; }
+.gatekeeper-transfer-actions .gatekeeper-next { width: 100%; min-width: 0; margin: 0; }
+.gatekeeper-cancel { background: rgba(23, 59, 84, 0.75); }
+.gatekeeper-send-final { border-color: rgba(255, 99, 118, 0.5); background: linear-gradient(135deg, #d83c55, #ff6a65); box-shadow: 0 10px 28px rgba(255, 70, 90, 0.2); }
+.gatekeeper-danger-mark { display: grid; place-items: center; align-self: center; width: 84px; height: 84px; margin-top: 20px; clip-path: polygon(50% 0, 100% 100%, 0 100%); color: #180307; background: var(--gate-red); font: 950 40px/1 ui-monospace, monospace; padding-top: 20px; filter: drop-shadow(0 0 20px rgba(255, 99, 118, 0.32)); }
+.gatekeeper-body .gatekeeper-danger-title { color: var(--gate-red); text-align: center; }
+.gatekeeper-danger-copy { margin: 0; padding: 14px; border: 1px solid rgba(255, 99, 118, 0.35); border-radius: 11px; color: rgba(255, 235, 238, 0.9); background: rgba(255, 99, 118, 0.09); font-size: 11.5px; line-height: 1.65; }
+.gatekeeper-danger-facts { display: grid; gap: 5px; color: #ff9eaa; font-size: 10px; }
+
+@media (max-width: 520px) {
+  #game-row { gap: 10px 14px; }
+  .game-icon { width: 44px; height: 44px; }
+  .game-app .app-name { font-size: 9px; }
+  .gatekeeper-top { align-items: flex-start; padding: 11px 12px; }
+  .gatekeeper-score { white-space: normal; text-align: right; }
+  .gatekeeper-body { min-height: 440px; padding: 15px 12px; }
+  .gatekeeper-fields > div { grid-template-columns: 82px 1fr; padding: 8px 9px; }
+  .gatekeeper-actions { grid-template-columns: 1fr; }
+  .gatekeeper-action { min-height: 40px; }
+  .gatekeeper-transfer-actions { grid-template-columns: 1fr; }
 }
 
 /* ---------- 🏃 ADAランナー ---------- */

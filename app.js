@@ -1,12 +1,12 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=39";
-import spoContent from "./content/spo.js?v=39";
-import drepContent from "./content/drep.js?v=39";
-import scamContent from "./content/scam.js?v=39";
-import valueContent from "./content/value.js?v=39";
-import midnightContent from "./content/midnight.js?v=39";
-import gameContent from "./content/game.js?v=39";
-import exchangeContent from "./content/exchange.js?v=39";
+import walletContent from "./content/wallet.js?v=40";
+import spoContent from "./content/spo.js?v=40";
+import drepContent from "./content/drep.js?v=40";
+import scamContent from "./content/scam.js?v=40";
+import valueContent from "./content/value.js?v=40";
+import midnightContent from "./content/midnight.js?v=40";
+import gameContent from "./content/game.js?v=40";
+import exchangeContent from "./content/exchange.js?v=40";
 
 const HOME_NODE_ID = "home";
 
@@ -1344,6 +1344,498 @@ function buildRunnerGame() {
   return box;
 }
 
+function buildExchangeGatekeeper() {
+  const cases = [
+    {
+      level: "ADDRESS CHECK",
+      risk: "HIGH",
+      title: "コピーしたはずの入金アドレス",
+      fields: [
+        ["取引所の表示", "addr1q9m3k7x2v8n4c6p0r5t1y8w3e7u2i9o4a6s8d0f5g2h7j9k"],
+        ["貼り付け後", "addr1q9m3k7x2v8n4c6p0r5t1y8w3e7u2i9o4a6s8d0f5g2h7j8k"],
+      ],
+      prompt: "50,000 ADAをこのまま送りますか？",
+      answer: "stop",
+      reason: "末尾付近が「…h7j9k」から「…h7j8k」に変わっています。クリップボード改ざん等も想定し、先頭・末尾だけでなく可能な範囲を照合し、アドレスを取り直してください。",
+      tip: "大口送金の前に少額テスト。取引所側で着金を確認してから残額を送ります。",
+    },
+    {
+      level: "NETWORK CHECK",
+      risk: "BLOCK",
+      title: "BSC上のラップドADA",
+      fields: [["保有資産", "Wrapped ADA / BEP-20"], ["入金先", "国内取引所 ADA（Cardanoネットワーク）"]],
+      prompt: "表示されたADA入金アドレスへ送りますか？",
+      answer: "stop",
+      reason: "同じADA表記でも、BEP-20上のラップドトークンとCardanoネイティブADAは別物です。対応外ネットワークへの送付は反映されない可能性があります。",
+      tip: "資産名だけでなく、送付元・送付先のネットワークを一致させます。",
+    },
+    {
+      level: "CHAIN SELECT",
+      risk: "BLOCK",
+      title: "送金チェーンでBRC-20を選択",
+      fields: [["送付資産", "ADA"], ["選択中", "Bitcoin / BRC-20"], ["入金先", "ADA / Cardanoネットワーク"]],
+      prompt: "手数料表示が安いので、このチェーンで進めますか？",
+      answer: "stop",
+      reason: "BRC-20はBitcoin上のトークン規格で、CardanoネットワークのADA入金とは互換性がありません。手数料や名前の近さではなく、両側の対応チェーンを一致させます。",
+      tip: "ADAを通常入金する場合は、取引所が明示するCardanoネットワークを選びます。",
+    },
+    {
+      level: "ASSET CHECK",
+      risk: "BLOCK",
+      title: "取扱いのないCardanoトークン",
+      fields: [["ウォレット内", "MIN / Cardano Native Token"], ["取引所の取扱", "ADAのみ"], ["選択した入金先", "ADA"]],
+      prompt: "同じCardanoチェーンなので送りますか？",
+      answer: "stop",
+      reason: "同じCardano上でも、ADAと各ネイティブトークンは別資産です。取引所が扱っていないトークンをADA入金先へ送ると、残高へ反映されず取り出せない可能性があります。",
+      tip: "チェーン一致に加えて、銘柄・コントラクトやポリシーID・取扱可否も確認します。",
+    },
+    {
+      level: "FRESH ADDRESS",
+      risk: "PAUSE",
+      title: "半年前に保存した入金アドレス",
+      fields: [["アドレス", "自分のメモ帳から貼り付け"], ["取引所画面", "今日はまだ開いていない"]],
+      prompt: "過去に成功したアドレスなので送りますか？",
+      answer: "check",
+      reason: "取引所の入金アドレスや運用ルールは変更される場合があります。過去のメモを信頼せず、その都度ログインして最新表示と注意事項を確認します。",
+      tip: "ブックマークではなく、公式アプリ・公式ドメインから入金画面へ。",
+    },
+    {
+      level: "TEST PASSED",
+      risk: "LOW",
+      title: "少額テストが正常に着金",
+      fields: [["ネットワーク", "Cardano ↔ Cardano"], ["アドレス", "今回の入金画面と完全一致"], ["確認", "10 ADAの着金・必要項目を確認済み"]],
+      prompt: "同じ条件で残額を送りますか？",
+      answer: "send",
+      reason: "ネットワーク、最新アドレス、取引所の反映、必要項目を確認できています。送金直前にもう一度数量とアドレスを確認して進める判断です。",
+      tip: "『テスト成功＝永久に安全』ではありません。次回は再び最新条件を確認します。",
+    },
+    {
+      level: "UTXO CHECK",
+      risk: "HIGH",
+      title: "ADAとNFTが同じUTxOにある",
+      fields: [["送付元", "セルフカストディ・ウォレット"], ["同梱資産", "ADA + Cardano NFT"], ["入金先", "ADAのみ対応の取引所"]],
+      prompt: "ウォレットの自動選択のまま送りますか？",
+      answer: "stop",
+      reason: "Cardanoでは1つのUTxOにADAとトークンが同梱されることがあります。取引所が非対応資産を受け取ると、表示や返還が困難になる可能性があります。",
+      tip: "送信内容の資産一覧を確認し、必要ならUTxOを整理してADAだけを送ります。",
+    },
+    {
+      level: "TRAVEL RULE",
+      risk: "REVIEW",
+      title: "送付先情報の選択肢が分からない",
+      fields: [["画面", "受取人・送付先VASPの入力が必須"], ["状況", "該当する選択肢を判断できない"]],
+      prompt: "近そうな項目を選んで進めますか？",
+      answer: "check",
+      reason: "トラベルルール等の確認項目を推測で入力してはいけません。取引所ごとに必要情報や対応先が異なるため、公式FAQまたはサポートへ確認します。",
+      tip: "コミュニティの話は参考。最終判断は利用中の取引所・プロジェクトの公式回答で。",
+    },
+    {
+      level: "MAINTENANCE",
+      risk: "PAUSE",
+      title: "ADA入金メンテナンス中",
+      fields: [["取引所表示", "ADAの入金を一時停止中"], ["SNS", "『チェーンは動いているから大丈夫』との投稿"]],
+      prompt: "チェーンが動いているので送りますか？",
+      answer: "stop",
+      reason: "ブロックチェーンが稼働中でも、取引所側の入金処理は停止していることがあります。反映遅延や確認負担を避け、公式の再開案内を待ちます。",
+      tip: "第三者の投稿より、取引所のステータス・告知・入金画面を優先します。",
+    },
+    {
+      level: "SOURCE CHECK",
+      risk: "HIGH",
+      title: "DEXから取引所へ直接送付",
+      fields: [["送付元", "DEX / スマートコントラクト"], ["入金先", "国内取引所 ADAアドレス"]],
+      prompt: "自分のウォレットを経由せず直接送りますか？",
+      answer: "check",
+      reason: "取引所によっては、送付元の識別や入金元情報に条件があります。コントラクトからの直接入金を受け付けるか公式情報で確認します。",
+      tip: "不明なら自分の対応ウォレットへ一度受け取り、資産とネットワークを確認します。",
+    },
+    {
+      level: "SCAM ALERT",
+      risk: "BLOCK",
+      title: "『ウォレットの復元・回復を手伝えます』というDM",
+      fields: [["入口", "『復元できませんか？』という投稿・相談への返信"], ["相手", "ウォレットのサポートや専門家を名乗るSNSアカウント"], ["警告", "ウイルスに侵されているので今すぐ回復が必要"], ["要求", "秘密鍵・シードフレーズと復旧手数料"]],
+      prompt: "回復してもらうため秘密鍵を教えますか？",
+      answer: "stop",
+      reason: "正規サポートが秘密鍵やシードフレーズを要求することはありません。渡した時点で資産を自由に動かされる危険があります。連絡を切り、公式アプリ・公式窓口から独立して確認します。",
+      tip: "秘密鍵とシードフレーズは、理由を問わず誰にも入力・送信しません。",
+    },
+    {
+      level: "PHISHING CHECK",
+      risk: "BLOCK",
+      title: "『あなたのウォレットが危険です』というメール",
+      fields: [["見た目", "公式ロゴ・緊急セキュリティ警告"], ["要求", "メール内リンクからウォレット接続"], ["期限", "30分以内に確認"]],
+      prompt: "公式らしいのでリンクを開いて接続しますか？",
+      answer: "stop",
+      reason: "緊急性をあおり、メール内リンクから接続や秘密情報の入力を求めるのは典型的なフィッシング手口です。送信元表示やロゴだけでは公式と判断できません。",
+      tip: "メールのリンクは使わず、保存済みの公式URL・公式アプリから状況を確認。不明なら公式窓口へ。",
+    },
+    {
+      level: "SOCIAL CHECK",
+      risk: "BLOCK",
+      title: "最近親しくなった人から投資の誘い",
+      fields: [["相手", "SNSで最近仲良くなった人"], ["提案", "必ず利益が出る限定投資"], ["条件", "前金をADAで指定アドレスへ"]],
+      prompt: "信頼できそうなので、まず前金を送りますか？",
+      answer: "stop",
+      reason: "関係性を築いて信用させ、暗号資産の投資や前金を求める誘導は詐欺の典型パターンです。暗号資産送金は原則として取り消せません。",
+      tip: "送金せず連絡を中断し、契約・事業者登録・勧誘内容を独立した公的情報と公式窓口で確認します。",
+    },
+    {
+      level: "GIVEAWAY",
+      risk: "BLOCK",
+      title: "著名人のライブ配信で『ADAを2倍にする』",
+      fields: [["映像", "著名人が話すライブ配信・公式風ロゴ"], ["条件", "指定先へADAを送れば2倍で返金"], ["残り時間", "08:42"]],
+      prompt: "終了前に1000 ADAを送りますか？",
+      answer: "stop",
+      reason: "先にADAを送れば増やして返すという企画は、偽ライブや盗用映像を使う代表的なGiveaway詐欺です。映像・認証マーク・視聴者数だけでは本物と判断できません。",
+      tip: "ADAや資産の送付を参加条件にするGiveawayには送金しません。",
+    },
+    {
+      level: "SIGNATURE",
+      risk: "BLOCK",
+      title: "『未請求のステーキング報酬』を受け取るサイト",
+      fields: [["誘導", "SNS広告のClaim Rewardsボタン"], ["操作", "ウォレット接続後、内容不明の取引へ署名"], ["表示", "無料・残り本日まで"]],
+      prompt: "資金は送らないので署名だけしますか？",
+      answer: "stop",
+      reason: "送金ボタンでなくても、署名する取引の出力には資産移動が含まれ得ます。理解できない取引や、広告から開いた請求サイトには署名しません。",
+      tip: "署名前に送付資産・送付先・数量を確認。分からない内容は拒否します。",
+    },
+    {
+      level: "WITHDRAWAL",
+      risk: "BLOCK",
+      title: "偽の利益を出金するため追加ADAを要求",
+      fields: [["投資サイト", "利益 280,000 ADA と表示"], ["出金条件", "税金・保証金として先に2,000 ADA"], ["案内", "支払えば全額を即時解除"]],
+      prompt: "利益を受け取るため追加送金しますか？",
+      answer: "stop",
+      reason: "画面上の利益は犯人が作った数字である可能性があります。出金のための税金・保証金・解除料を次々要求するのはSNS型投資詐欺の典型です。",
+      tip: "追加送金を止め、記録を保存して警察・消費生活センター・金融庁等へ相談します。",
+    },
+    {
+      level: "HISTORY POISON",
+      risk: "HIGH",
+      title: "履歴に似たアドレスから少額ADAが届いた",
+      fields: [["履歴の上段", "addr1q9m3k…h7j8k / 知らない送信元"], ["本来の送付先", "addr1q9m3k…h7j9k / 以前利用"], ["操作", "履歴の最新アドレスをコピー"]],
+      prompt: "先頭が同じなので履歴から送りますか？",
+      answer: "stop",
+      reason: "似た文字列のアドレスを履歴へ残し、次回のコピー間違いを狙うアドレスポイズニングの可能性があります。受信履歴はアドレス帳ではありません。",
+      tip: "送付先の公式画面や信頼できる登録先から取り直し、全体と先頭・末尾を照合します。",
+    },
+    {
+      level: "FAKE WALLET",
+      risk: "BLOCK",
+      title: "検索広告からウォレット拡張機能をインストール",
+      fields: [["検索結果", "最上段のスポンサー広告"], ["拡張機能", "公式とほぼ同じ名前・アイコン"], ["初期画面", "復元用シードフレーズを入力"]],
+      prompt: "検索上位なのでシードフレーズを入力しますか？",
+      answer: "stop",
+      reason: "検索広告や偽ストアページから、正規品そっくりの偽ウォレットへ誘導される場合があります。シードを入力すれば全資産を奪われる危険があります。",
+      tip: "公式プロジェクトの確認済みサイトから正規ストアへ移動し、提供元も照合します。",
+    },
+    {
+      level: "REMOTE ACCESS",
+      risk: "BLOCK",
+      title: "サポートが遠隔操作アプリを要求",
+      fields: [["連絡", "入金エラーを直すという電話"], ["要求", "画面共有・遠隔操作アプリの導入"], ["次の操作", "取引所とウォレットへログイン"]],
+      prompt: "操作を見てもらうため接続を許可しますか？",
+      answer: "stop",
+      reason: "遠隔操作中に送金、認証コード窃取、秘密情報の閲覧をされる危険があります。突然連絡してきた相手へ端末操作を渡しません。",
+      tip: "通話を切り、自分で公式サイトに記載された窓口へ連絡します。",
+    },
+    {
+      level: "TOKEN BAIT",
+      risk: "BLOCK",
+      title: "身に覚えのないNFTに交換サイトのURL",
+      fields: [["受信", "無料NFT / 5000 ADA REWARD"], ["画像内", "報酬請求用の短縮URL"], ["サイト", "ウォレット接続と署名を要求"]],
+      prompt: "無料で届いたのでURLから請求しますか？",
+      answer: "stop",
+      reason: "勝手に送られたトークンやNFTの名称・画像・メタデータに、悪意あるサイトへの誘導が埋め込まれることがあります。受け取っただけで特典が本物とは限りません。",
+      tip: "不審なトークンのURLを開かず、接続や署名をしません。",
+    },
+    {
+      level: "AUTH CODE",
+      risk: "BLOCK",
+      title: "取引所サポートから認証コードの確認電話",
+      fields: [["相手", "不正ログインを止めるという担当者"], ["SMS", "取引所から6桁コードが到着"], ["要求", "本人確認のためコードを読み上げる"]],
+      prompt: "被害を止めるためコードを伝えますか？",
+      answer: "stop",
+      reason: "認証コードを聞き出してログインや送金を完了させる手口です。正規窓口を名乗っても、パスワードやワンタイムコードを第三者へ伝えません。",
+      tip: "電話を切り、公式アプリからログイン履歴・出金制限・認証設定を確認します。",
+    },
+    {
+      level: "FAKE MAINTENANCE",
+      risk: "BLOCK",
+      title: "公式を装い『メンテナンス前に資金移動を』",
+      fields: [["通知", "取引所と同じロゴ・公式風アカウント"], ["理由", "緊急メンテナンス中は資金が失われる"], ["指示", "保全用ウォレットへADAを全額移動"], ["期限", "本日23:00まで"]],
+      prompt: "資産を守るため指定アドレスへ移しますか？",
+      answer: "stop",
+      reason: "メンテナンスを口実に、犯人のアドレスへ『避難』『保全』『同期』などの名目で送らせる手口です。公式風の表示や実在する障害情報があっても、指定先への送金要求は別に検証します。",
+      tip: "通知のリンクや連絡先は使わず、公式アプリ・登録済みURLの告知を確認し、必要なら公式窓口へ自分から連絡します。",
+    },
+  ];
+
+  const labels = { send: "送信する", stop: "止める", check: "公式へ確認" };
+  const icons = { send: "➜", stop: "■", check: "?" };
+  // 中核6検査は毎回出題し、最後の1件だけ運用系ケースから交替で選ぶ。
+  const coreCases = [cases[0], cases[2], cases[3], cases[5], cases[11], cases[12]];
+  const optionalCases = cases.filter((item) => !coreCases.includes(item));
+  const gameCases = pickRandomN(coreCases.concat(pickRandomN(optionalCases, 4)), 10);
+  const maxScore = gameCases.length * 100;
+  const passScore = Math.ceil(gameCases.length * 0.8) * 100;
+  let current = 0;
+  let score = 0;
+  let streak = 0;
+  let locked = false;
+  const mistakes = [];
+
+  const box = document.createElement("section");
+  box.className = "gatekeeper";
+  box.setAttribute("aria-label", "Exchange Gatekeeper");
+
+  const top = document.createElement("div");
+  top.className = "gatekeeper-top";
+  const brand = document.createElement("div");
+  brand.className = "gatekeeper-brand";
+  brand.innerHTML = '<span class="gatekeeper-mark">G</span><span><strong>EXCHANGE GATEKEEPER</strong><small>TRANSFER CONTROL / ADA</small></span>';
+  const scoreEl = document.createElement("div");
+  scoreEl.className = "gatekeeper-score";
+  top.append(brand, scoreEl);
+
+  const progress = document.createElement("div");
+  progress.className = "gatekeeper-progress";
+  const progressBar = document.createElement("span");
+  progress.appendChild(progressBar);
+
+  const body = document.createElement("div");
+  body.className = "gatekeeper-body";
+  box.append(top, progress, body);
+
+  function updateChrome() {
+    scoreEl.textContent = "SCORE " + String(score).padStart(3, "0") + " / STREAK " + streak + " / CASE " + Math.min(current + 1, gameCases.length) + ":" + gameCases.length;
+    progressBar.style.width = ((current / gameCases.length) * 100) + "%";
+  }
+
+  function getDefenseRank() {
+    const correct = Math.round(score / 100);
+    if (correct === gameCases.length) return { level: 5, title: "SCAM SENTINEL", copy: "技術的な違和感と心理的な誘導の両方を遮断できました。" };
+    if (correct >= Math.ceil(gameCases.length * 0.8)) return { level: 4, title: "GATEKEEPER", copy: "実戦的な防御判断ができています。送信直前の再確認も続けましょう。" };
+    if (correct >= Math.ceil(gameCases.length * 0.6)) return { level: 3, title: "SAFETY CHECKER", copy: "基本判断はできています。急がせる誘導と署名内容の確認を強化しましょう。" };
+    if (correct >= Math.ceil(gameCases.length * 0.4)) return { level: 2, title: "CAUTION LEARNER", copy: "危険を感じたら操作を止め、公式窓口へ自分から確認する習慣をつけましょう。" };
+    return { level: 1, title: "RISK EXPOSED", copy: "送金・接続・署名前に一度止まるところから再訓練しましょう。" };
+  }
+
+  function renderTransferReview() {
+    body.replaceChildren();
+    const status = document.createElement("div");
+    status.className = "gatekeeper-transfer-status";
+    status.textContent = "FINAL APPROVAL / 送金実行前";
+    const title = document.createElement("h3");
+    title.textContent = "この送金を実行しますか？";
+    const transfer = document.createElement("div");
+    transfer.className = "gatekeeper-transfer-card";
+    [["送金額", "50,000 ADA"], ["ネットワーク", "Cardano"], ["宛先", "addr1q9m3k7x2v8n4c6p0r5t1y8w3e7u2i9o4a6s8d0f5g2h7j9k"], ["取消", "送信後は原則として取消不可"]].forEach(([key, value]) => {
+      const row = document.createElement("div");
+      const label = document.createElement("span");
+      label.textContent = key;
+      const data = document.createElement("code");
+      data.textContent = value;
+      row.append(label, data);
+      transfer.appendChild(row);
+    });
+    const caution = document.createElement("p");
+    caution.className = "gatekeeper-transfer-caution";
+    caution.textContent = "最終確認です。受取人・資産・チェーン・アドレス・数量を確認してください。";
+    const actions = document.createElement("div");
+    actions.className = "gatekeeper-transfer-actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "gatekeeper-next gatekeeper-cancel";
+    cancel.textContent = "戻って確認する";
+    cancel.addEventListener("click", renderFinish);
+    const send = document.createElement("button");
+    send.type = "button";
+    send.className = "gatekeeper-next gatekeeper-send-final";
+    send.textContent = "50,000 ADAを送金する";
+    send.addEventListener("click", () => {
+      body.replaceChildren();
+      const stop = document.createElement("div");
+      stop.className = "gatekeeper-danger-mark";
+      stop.textContent = "!";
+      const dangerTitle = document.createElement("h3");
+      dangerTitle.className = "gatekeeper-danger-title";
+      dangerTitle.textContent = "SIMULATION STOPPED / これは危険です";
+      const danger = document.createElement("p");
+      danger.className = "gatekeeper-danger-copy";
+      danger.textContent = "画面には『公式』と表示されています。しかし、本当に公式でしょうか。詐欺撃退LEVELが高くても、この画面や宛先が本物だとは証明されません。まず、自分が登録している取引所の公式アプリまたは保存済みの正規URLを自分で開き、同じ告知や指示が実際に出ているか確認してください。公式側に情報がなければ、偽装の可能性があります。";
+      const facts = document.createElement("div");
+      facts.className = "gatekeeper-danger-facts";
+      ["通知内のリンクや連絡先から確認しない", "登録済み取引所の公式アプリ・正規URLを自分で開く", "公式告知に同じ情報がなければ送金しない", "実際のADAは送信されていません", "送金完了ではなく『止まれた』ことがクリアです"].forEach((value) => {
+        const item = document.createElement("span");
+        item.textContent = "■ " + value;
+        facts.appendChild(item);
+      });
+      const retry = document.createElement("button");
+      retry.type = "button";
+      retry.className = "gatekeeper-next";
+      retry.textContent = "↻ 別の送金を検査する";
+      retry.addEventListener("click", () => {
+        current = 0;
+        score = 0;
+        streak = 0;
+        mistakes.length = 0;
+        for (let i = gameCases.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [gameCases[i], gameCases[j]] = [gameCases[j], gameCases[i]];
+        }
+        renderCase();
+      });
+      body.append(stop, dangerTitle, danger, facts, retry);
+    });
+    actions.append(cancel, send);
+    body.append(status, title, transfer, caution, actions);
+  }
+
+  function renderFinish() {
+    const rank = getDefenseRank();
+    progressBar.style.width = "100%";
+    body.replaceChildren();
+    const seal = document.createElement("div");
+    seal.className = "gatekeeper-seal";
+    seal.textContent = "LV" + rank.level;
+    const title = document.createElement("h3");
+    title.textContent = "詐欺撃退LEVEL " + rank.level;
+    const rankName = document.createElement("p");
+    rankName.className = "gatekeeper-rank-name";
+    rankName.textContent = rank.title;
+    const result = document.createElement("p");
+    result.className = "gatekeeper-finish-score";
+    result.textContent = "FINAL SCORE  " + score + " / " + maxScore;
+    const rankCopy = document.createElement("p");
+    rankCopy.className = "gatekeeper-rank-copy";
+    rankCopy.textContent = rank.copy;
+    const note = document.createElement("p");
+    note.className = "gatekeeper-finish-note";
+    note.textContent = mistakes.length
+      ? "再確認テーマ / " + Array.from(new Set(mistakes)).slice(0, 3).join("・") + "。ゲームは判断練習です。実際の条件は毎回公式画面で確認してください。"
+      : "全検査を突破しました。ただし実際の条件は変更されます。毎回取引所の公式画面・FAQを確認し、不明点は公式サポートへ問い合わせてください。";
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "gatekeeper-next";
+    retry.textContent = score >= passScore ? "最終送金画面へ  →" : "↻ 再検査する";
+    retry.addEventListener("click", () => {
+      if (score >= passScore) {
+        renderTransferReview();
+        return;
+      }
+      current = 0;
+      score = 0;
+      streak = 0;
+      mistakes.length = 0;
+      for (let i = gameCases.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [gameCases[i], gameCases[j]] = [gameCases[j], gameCases[i]];
+      }
+      renderCase();
+    });
+    const cleared = document.createElement("div");
+    cleared.className = "gatekeeper-cleared";
+    const checks = rank.level >= 4
+      ? ["TOKEN", "CHAIN", "ADDRESS", "VASP", "STATUS", "SOURCE", "AMOUNT"]
+      : ["TRANSFER LOCKED", "RETRAIN REQUIRED"];
+    checks.forEach((check) => {
+      const chip = document.createElement("span");
+      chip.textContent = (rank.level >= 4 ? "✓ " : "! ") + check;
+      if (rank.level < 4) chip.classList.add("is-locked");
+      cleared.appendChild(chip);
+    });
+    body.append(seal, title, rankName, result, rankCopy, cleared, note, retry);
+  }
+
+  function choose(action, buttons, resultBox) {
+    if (locked) return;
+    locked = true;
+    const item = gameCases[current];
+    const correct = action === item.answer;
+    if (correct) {
+      streak += 1;
+      score += 100;
+    } else {
+      streak = 0;
+      mistakes.push(item.level);
+    }
+    buttons.forEach((button) => {
+      button.disabled = true;
+      if (button.dataset.action === item.answer) button.classList.add("is-answer");
+      if (button.dataset.action === action && !correct) button.classList.add("is-wrong");
+    });
+    resultBox.className = "gatekeeper-result " + (correct ? "is-correct" : "is-wrong");
+    const verdict = document.createElement("strong");
+    verdict.textContent = correct ? "ACCESS GRANTED — 判断OK" : "ACCESS DENIED — 正解は「" + labels[item.answer] + "」";
+    const why = document.createElement("p");
+    why.textContent = item.reason;
+    const tip = document.createElement("small");
+    tip.textContent = "GATE TIP / " + item.tip;
+    const next = document.createElement("button");
+    next.type = "button";
+    next.className = "gatekeeper-next";
+    next.textContent = current + 1 === gameCases.length ? "FINAL REPORT  →" : "NEXT CASE  →";
+    next.addEventListener("click", () => {
+      current += 1;
+      if (current >= gameCases.length) renderFinish();
+      else renderCase();
+    });
+    resultBox.append(verdict, why, tip, next);
+    updateChrome();
+  }
+
+  function renderCase() {
+    locked = false;
+    updateChrome();
+    body.replaceChildren();
+    const item = gameCases[current];
+    const head = document.createElement("div");
+    head.className = "gatekeeper-case-head";
+    const badge = document.createElement("span");
+    badge.className = "gatekeeper-badge";
+    badge.textContent = item.level;
+    const risk = document.createElement("span");
+    risk.className = "gatekeeper-risk";
+    risk.textContent = "RISK / " + item.risk;
+    head.append(badge, risk);
+    const title = document.createElement("h3");
+    title.textContent = item.title;
+    const fields = document.createElement("div");
+    fields.className = "gatekeeper-fields";
+    item.fields.forEach(([label, value]) => {
+      const row = document.createElement("div");
+      const key = document.createElement("span");
+      key.textContent = label;
+      const val = document.createElement("code");
+      val.textContent = value;
+      row.append(key, val);
+      fields.appendChild(row);
+    });
+    const prompt = document.createElement("p");
+    prompt.className = "gatekeeper-prompt";
+    prompt.textContent = item.prompt;
+    const actions = document.createElement("div");
+    actions.className = "gatekeeper-actions";
+    const buttons = ["send", "stop", "check"].map((action) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "gatekeeper-action is-" + action;
+      button.dataset.action = action;
+      button.innerHTML = '<span aria-hidden="true">' + icons[action] + '</span>' + labels[action];
+      actions.appendChild(button);
+      return button;
+    });
+    const resultBox = document.createElement("div");
+    resultBox.className = "gatekeeper-result";
+    buttons.forEach((button) => button.addEventListener("click", () => choose(button.dataset.action, buttons, resultBox)));
+    body.append(head, title, fields, prompt, actions, resultBox);
+  }
+
+  renderCase();
+  return box;
+}
+
 function slotStatLine(pairs) {
   const wrap = document.createElement("div");
   wrap.className = "slot-stats";
@@ -1620,6 +2112,14 @@ function renderNode(nodeId, opts = {}) {
   if (node.type === "runner-game") {
     appendBubble("🏃 **ADAランナー**! 章をえらんであそぼう — 遊び方はゲーム画面の中に出ます:", "bot");
     appendBubble(buildRunnerGame(), "bot");
+    clearOptions();
+    renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+    return;
+  }
+
+  if (node.type === "exchange-gatekeeper") {
+    appendBubble("🛡️ **Exchange Gatekeeper** — 送信前の異常を見抜き、送る・止める・公式へ確認の3択で資産を守ろう:", "bot");
+    appendBubble(buildExchangeGatekeeper(), "bot");
     clearOptions();
     renderNavButtons({ showBack: state.history.length > 0, showHome: true });
     return;
