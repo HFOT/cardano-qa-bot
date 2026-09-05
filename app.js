@@ -1,11 +1,11 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=35";
-import spoContent from "./content/spo.js?v=35";
-import drepContent from "./content/drep.js?v=35";
-import scamContent from "./content/scam.js?v=35";
-import valueContent from "./content/value.js?v=35";
-import midnightContent from "./content/midnight.js?v=35";
-import gameContent from "./content/game.js?v=35";
+import walletContent from "./content/wallet.js?v=36";
+import spoContent from "./content/spo.js?v=36";
+import drepContent from "./content/drep.js?v=36";
+import scamContent from "./content/scam.js?v=36";
+import valueContent from "./content/value.js?v=36";
+import midnightContent from "./content/midnight.js?v=36";
+import gameContent from "./content/game.js?v=36";
 
 const HOME_NODE_ID = "home";
 
@@ -695,54 +695,85 @@ const BEST_PROPOSALS = [
 function buildRunnerGame() {
   const box = document.createElement("div");
   box.className = "runner-box";
+  const stageWrap = document.createElement("div");
+  stageWrap.className = "runner-stage";
   const canvas = document.createElement("canvas");
   canvas.width = 560;
-  canvas.height = 190;
+  canvas.height = 300;
   canvas.className = "runner-canvas";
   canvas.setAttribute("tabindex", "0");
+  const overlay = document.createElement("div");
+  overlay.className = "runner-overlay";
+  stageWrap.appendChild(canvas);
+  stageWrap.appendChild(overlay);
   const hud = document.createElement("div");
   hud.className = "runner-hud";
   const lessons = document.createElement("div");
   lessons.className = "runner-lessons";
-  const legend = document.createElement("div");
-  legend.className = "slot-note";
-  legend.textContent = "タップ/スペースでジャンプ。全3章: ホルダー章 → ラグプル・スキャム章(あなたが悪役) → 分散化章(最後に世界の形が決まる)";
-  box.appendChild(canvas);
+  box.appendChild(stageWrap);
   box.appendChild(hud);
   box.appendChild(lessons);
-  box.appendChild(legend);
 
   const ctx = canvas.getContext("2d");
-  const GROUND_Y = 158;
-  const STAGE_LEN = 1250; // 各章の長さ(フレーム)
-  const P = { x: 56, y: GROUND_Y, vy: 0, w: 26, h: 30 };
+  const W = 560;
+  const H = 300;
+  const GROUND_Y = 262;
+  const STAGE_LEN = 1250;
+  const P = { x: 60, y: GROUND_Y, vy: 0, w: 26, h: 30 };
   const GRAVITY = 0.55;
   const JUMP_V = -10.2;
   let entities = [];
   let frame = 0;
   let stage = 1;
   let stageFrame = 0;
+  let mode = "all"; // "all" | 1 | 2 | 3
   let score = 0;
-  let loot = 0; // stage2: 未換金の奪った資金
-  let fudActive = false; // stage2: 次の強奪2倍
-  let stolenTotal = 0; // stage2: 奪った総額(反省用)
-  let dece = 0; // stage3: 分散化カウント
-  let cent = 0; // stage3: 中央集権カウント
-  let minionQueue = 0; // stage3: ボス後の手下ラッシュ
+  let loot = 0;
+  let fudActive = false;
+  let stolenTotal = 0;
+  let dece = 0;
+  let cent = 0;
+  let minionQueue = 0;
   let flash = 0;
   let running = false;
-  let gameOver = false;
-  let cleared = false;
-  let nextSpawn = 60;
+  let playing = false; // 章プレイ中(オーバーレイ非表示)
   let best = 0;
+  let nextSpawn = 60;
   try {
     best = parseInt(localStorage.getItem("wc_runner_best") || "0", 10) || 0;
   } catch (e) {}
 
-  const STAGE_TITLES = {
-    1: "STAGE 1 ホルダー章",
-    2: "STAGE 2 ラグプル・スキャム章 — 今度はあなたが悪役だ",
-    3: "STAGE 3 分散化章 — 世界の形はあなたが決める",
+  const STAGE_META = {
+    1: {
+      title: "STAGE 1 ホルダー章",
+      icon: "🏃",
+      rules: [
+        "🧟スキャム・🧻ラグ → ジャンプでよける(当たると終了)",
+        "🟢いい提案 → 取る(+50)",
+        "🔴わるい提案 → スルー(取ると-80)",
+        "₳コイン → +15",
+      ],
+    },
+    2: {
+      title: "STAGE 2 ラグプル・スキャム章",
+      icon: "🧟",
+      rules: [
+        "立場逆転! あなたがゾンビ(悪役体験)",
+        "🙂ホルダーに触れて資金を奪う(+100)",
+        "💢FUDを取ると次の強奪が2倍",
+        "🏦銀行で換金して初めてスコアになる",
+      ],
+    },
+    3: {
+      title: "STAGE 3 分散化章",
+      icon: "🌐",
+      rules: [
+        "🌐分散を取る? 🏛中央集権を取る? 選択の連続",
+        "👑ボス → 中央集権が半減、ただし手下ラッシュ",
+        "最後にネットワークの形が決まる",
+        "🌐 ≧ 🏛 なら分散化エンディング",
+      ],
+    },
   };
 
   function themeColors() {
@@ -755,56 +786,221 @@ function buildRunnerGame() {
     };
   }
 
-  function reset() {
-    entities = [];
-    frame = 0;
-    stage = 1;
+  function makeBtn(label, cls, onClick) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = cls;
+    b.textContent = label;
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onClick();
+    });
+    return b;
+  }
+
+  function clearCanvasIdle() {
+    const c = themeColors();
+    ctx.fillStyle = c.bg;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // ---- 画面: タイトル(章選択) ----
+  function showTitle() {
+    running = false;
+    playing = false;
+    clearCanvasIdle();
+    lessons.replaceChildren();
+    hud.textContent = "BEST " + best;
+    overlay.replaceChildren();
+    overlay.classList.remove("hidden");
+    const t = document.createElement("div");
+    t.className = "runner-title";
+    t.textContent = "🏃 ADAランナー";
+    const sub = document.createElement("div");
+    sub.className = "runner-sub";
+    sub.textContent = "章をえらんで遊ぶ(遊び方は各章の画面で)";
+    overlay.appendChild(t);
+    overlay.appendChild(sub);
+    overlay.appendChild(
+      makeBtn("▶ 全3章 通しプレイ", "runner-btn runner-btn-main", () => showStageIntro(1, "all"))
+    );
+    [1, 2, 3].forEach((n) => {
+      overlay.appendChild(
+        makeBtn(STAGE_META[n].icon + " " + STAGE_META[n].title, "runner-btn", () =>
+          showStageIntro(n, n)
+        )
+      );
+    });
+  }
+
+  // ---- 画面: 章の説明 + スタート ----
+  function showStageIntro(n, selectedMode) {
+    running = false;
+    playing = false;
+    clearCanvasIdle();
+    overlay.replaceChildren();
+    overlay.classList.remove("hidden");
+    const t = document.createElement("div");
+    t.className = "runner-title";
+    t.textContent = STAGE_META[n].icon + " " + STAGE_META[n].title;
+    overlay.appendChild(t);
+    const rulesBox = document.createElement("div");
+    rulesBox.className = "runner-rules";
+    STAGE_META[n].rules.forEach((line) => {
+      const li = document.createElement("div");
+      li.textContent = line;
+      rulesBox.appendChild(li);
+    });
+    overlay.appendChild(rulesBox);
+    overlay.appendChild(
+      makeBtn("▶ スタート (タップ/スペースでジャンプ)", "runner-btn runner-btn-main", () =>
+        startStage(n, selectedMode)
+      )
+    );
+    overlay.appendChild(makeBtn("章をえらびなおす", "runner-btn runner-btn-sub", showTitle));
+  }
+
+  function startStage(n, selectedMode) {
+    mode = selectedMode;
+    stage = n;
     stageFrame = 0;
-    score = 0;
-    loot = 0;
-    fudActive = false;
-    stolenTotal = 0;
-    dece = 0;
-    cent = 0;
-    minionQueue = 0;
-    flash = 0;
+    entities = [];
     P.y = GROUND_Y;
     P.vy = 0;
-    gameOver = false;
-    cleared = false;
-    nextSpawn = 60;
+    flash = 0;
+    nextSpawn = 50;
+    if (mode !== "all" || n === 1) {
+      frame = 0;
+      score = 0;
+      stolenTotal = 0;
+      dece = 0;
+      cent = 0;
+    }
+    loot = 0;
+    fudActive = false;
+    minionQueue = 0;
     lessons.replaceChildren();
+    overlay.classList.add("hidden");
+    playing = true;
+    running = true;
+    canvas.focus();
+    loop();
+  }
+
+  // ---- 画面: 結果 ----
+  function saveBest() {
+    const f = Math.floor(score);
+    if (f > best) {
+      best = f;
+      try {
+        localStorage.setItem("wc_runner_best", String(best));
+      } catch (e) {}
+    }
+    return f;
+  }
+
+  function addLesson(cls, text) {
+    const el = document.createElement("div");
+    el.className = "lesson " + cls;
+    el.textContent = text;
+    lessons.appendChild(el);
+  }
+
+  function showResult(titleText, lines, isGood) {
+    running = false;
+    playing = false;
+    const f = saveBest();
+    overlay.replaceChildren();
+    overlay.classList.remove("hidden");
+    const t = document.createElement("div");
+    t.className = "runner-title " + (isGood ? "runner-title-good" : "runner-title-bad");
+    t.textContent = titleText;
+    overlay.appendChild(t);
+    const info = document.createElement("div");
+    info.className = "runner-rules";
+    lines.concat(["スコア " + f + " / ベスト " + best]).forEach((line) => {
+      const li = document.createElement("div");
+      li.textContent = line;
+      info.appendChild(li);
+    });
+    overlay.appendChild(info);
+    overlay.appendChild(
+      makeBtn("🔁 もう一回", "runner-btn runner-btn-main", () =>
+        showStageIntro(mode === "all" ? 1 : stage, mode)
+      )
+    );
+    overlay.appendChild(makeBtn("章をえらぶ", "runner-btn runner-btn-sub", showTitle));
+    hud.textContent = "SCORE " + f + "　BEST " + best;
+  }
+
+  function onStageClear() {
+    if (mode === "all" && stage < 3) {
+      // 次章の説明画面へ(スコア持ち越し)
+      running = false;
+      playing = false;
+      showStageIntro(stage + 1, "all");
+      return;
+    }
+    // 結果表示
+    if (stage === 1) {
+      showResult("✅ ホルダー章 クリア!", ["スキャムを見抜く目、育っています"], true);
+      const worst = WORST_PROPOSALS[Math.floor(Math.random() * WORST_PROPOSALS.length)];
+      const bestEx = BEST_PROPOSALS[Math.floor(Math.random() * BEST_PROPOSALS.length)];
+      addLesson("lesson-worst", "📉 現実の最悪な提案の例: " + worst);
+      addLesson("lesson-best", "📈 現実の最善な提案の例: " + bestEx);
+    } else if (stage === 2) {
+      showResult(
+        "🧟 スキャム章 終了",
+        ["奪った資金 " + stolenTotal.toLocaleString() + "₳", "未換金のまま消えた分 " + loot.toLocaleString() + "₳"],
+        false
+      );
+      addLesson(
+        "lesson-worst",
+        "📉 あなたが奪った" + stolenTotal.toLocaleString() + "₳は、現実では誰かの大切な資産。手口を知った今、守る側に回ろう。"
+      );
+    } else {
+      const isDece = dece >= cent;
+      showResult(
+        isDece ? "🌐 分散化エンディング" : "🏛 中央集権エンディング",
+        ["分散 " + dece + " vs 中央 " + cent],
+        isDece
+      );
+      addLesson(
+        isDece ? "lesson-best" : "lesson-worst",
+        isDece
+          ? "🌐 あなたの選択でネットワークは分散を保った。現実でも、一票一委任が同じ力を持っています。"
+          : "🏛 ネットワークは中央集権に傾いた。分散への小さな選択の積み重ねが、現実の防波堤です。"
+      );
+      addLesson("lesson-moral", "詳しくは「詐欺の手口を知る」「ADAの価値」トピックで解説しています。");
+    }
+  }
+
+  function onGameOver() {
+    showResult("💀 GAME OVER", ["スキャムかラグに接触…"], false);
+    const worst = WORST_PROPOSALS[Math.floor(Math.random() * WORST_PROPOSALS.length)];
+    const bestEx = BEST_PROPOSALS[Math.floor(Math.random() * BEST_PROPOSALS.length)];
+    addLesson("lesson-worst", "📉 現実の最悪な提案の例: " + worst);
+    addLesson("lesson-best", "📈 現実の最善な提案の例: " + bestEx);
+    addLesson("lesson-moral", "現実の提案も「取るか・スルーするか」。投票の前に過去の実績を見よう!");
   }
 
   function jump() {
-    if (gameOver) {
-      reset();
-      running = true;
-      loop();
-      return;
-    }
-    if (!running) {
-      running = true;
-      loop();
-      return;
-    }
+    if (!playing) return;
     if (P.y >= GROUND_Y - 1) {
       P.vy = JUMP_V;
     }
   }
 
-  // ₳の頭を持つスティックランナー(stage2はゾンビ)
   function drawRunner(c) {
     const cx = P.x + P.w / 2;
     const feetY = P.y;
     if (stage === 2) {
-      // あなたは今、ゾンビである
-      ctx.font = "30px sans-serif";
+      ctx.font = "34px sans-serif";
       ctx.textAlign = "center";
       ctx.fillText("🧟", cx, feetY - 2);
       if (fudActive) {
-        ctx.font = "12px sans-serif";
-        ctx.fillText("💢×2", cx + 22, feetY - 34);
+        ctx.font = "14px sans-serif";
+        ctx.fillText("💢×2", cx + 26, feetY - 38);
       }
       return;
     }
@@ -861,42 +1057,42 @@ function buildRunnerGame() {
   }
 
   function spawn() {
-    const airY = 74 + Math.random() * 48;
+    const airY = 180 + Math.random() * 50;
     const roll = Math.random();
     if (stage === 1) {
       if (roll < 0.3) {
-        entities.push({ type: "scam", icon: "🧟", x: 580, y: GROUND_Y, w: 26, h: 28 });
+        entities.push({ type: "scam", icon: "🧟", x: W + 20, y: GROUND_Y, w: 26, h: 28 });
       } else if (roll < 0.5) {
-        entities.push({ type: "rug", icon: "🧻", x: 580, y: GROUND_Y, w: 30, h: 24 });
+        entities.push({ type: "rug", icon: "🧻", x: W + 20, y: GROUND_Y, w: 30, h: 24 });
       } else if (roll < 0.68) {
-        entities.push({ type: "good", icon: "🟢", x: 580, y: airY, w: 24, h: 24 });
+        entities.push({ type: "good", icon: "🟢", x: W + 20, y: airY, w: 24, h: 24 });
       } else if (roll < 0.84) {
-        entities.push({ type: "bad", icon: "🔴", x: 580, y: airY, w: 24, h: 24 });
+        entities.push({ type: "bad", icon: "🔴", x: W + 20, y: airY, w: 24, h: 24 });
       } else {
-        entities.push({ type: "coin", icon: "", x: 580, y: airY + 10, w: 20, h: 20 });
+        entities.push({ type: "coin", icon: "", x: W + 20, y: airY + 10, w: 20, h: 20 });
       }
     } else if (stage === 2) {
       if (roll < 0.44) {
-        entities.push({ type: "holder", icon: "🙂", x: 580, y: GROUND_Y, w: 26, h: 28 });
+        entities.push({ type: "holder", icon: "🙂", x: W + 20, y: GROUND_Y, w: 26, h: 28 });
       } else if (roll < 0.62) {
-        entities.push({ type: "fud", icon: "💢", x: 580, y: airY, w: 24, h: 24 });
+        entities.push({ type: "fud", icon: "💢", x: W + 20, y: airY, w: 24, h: 24 });
       } else if (roll < 0.78) {
-        entities.push({ type: "bank", icon: "🏦", x: 580, y: GROUND_Y, w: 32, h: 32 });
+        entities.push({ type: "bank", icon: "🏦", x: W + 20, y: GROUND_Y, w: 32, h: 32 });
       } else {
-        entities.push({ type: "coin", icon: "", x: 580, y: airY + 10, w: 20, h: 20 });
+        entities.push({ type: "coin", icon: "", x: W + 20, y: airY + 10, w: 20, h: 20 });
       }
     } else {
       if (minionQueue > 0) {
         minionQueue -= 1;
-        entities.push({ type: "cent", icon: "🏛", x: 580, y: 74 + Math.random() * 48, w: 26, h: 26 });
+        entities.push({ type: "cent", icon: "🏛", x: W + 20, y: 180 + Math.random() * 50, w: 26, h: 26 });
       } else if (roll < 0.06) {
-        entities.push({ type: "boss", icon: "👑", x: 580, y: GROUND_Y, w: 36, h: 34 });
+        entities.push({ type: "boss", icon: "👑", x: W + 20, y: GROUND_Y, w: 36, h: 34 });
       } else if (roll < 0.5) {
-        entities.push({ type: "dece", icon: "🌐", x: 580, y: airY, w: 26, h: 26 });
+        entities.push({ type: "dece", icon: "🌐", x: W + 20, y: airY, w: 26, h: 26 });
       } else if (roll < 0.9) {
-        entities.push({ type: "cent", icon: "🏛", x: 580, y: airY, w: 26, h: 26 });
+        entities.push({ type: "cent", icon: "🏛", x: W + 20, y: airY, w: 26, h: 26 });
       } else {
-        entities.push({ type: "coin", icon: "", x: 580, y: airY + 10, w: 20, h: 20 });
+        entities.push({ type: "coin", icon: "", x: W + 20, y: airY + 10, w: 20, h: 20 });
       }
     }
     const speedBias = Math.min(frame / 2400, 1);
@@ -913,58 +1109,6 @@ function buildRunnerGame() {
     );
   }
 
-  function stageBanner() {
-    if (stageFrame < 120) {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
-      ctx.fillRect(0, 28, 560, 34);
-      ctx.fillStyle = "#ffd75a";
-      ctx.font = "bold 15px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(STAGE_TITLES[stage], 280, 50);
-    }
-  }
-
-  function showEnding() {
-    running = false;
-    gameOver = true;
-    cleared = true;
-    const finalScore = Math.floor(score);
-    if (finalScore > best) {
-      best = finalScore;
-      try {
-        localStorage.setItem("wc_runner_best", String(best));
-      } catch (e) {}
-    }
-    const isDece = dece >= cent;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-    ctx.fillRect(0, 0, 560, 190);
-    ctx.fillStyle = isDece ? "#21d4c2" : "#e5484d";
-    ctx.font = "bold 20px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(isDece ? "🌐 分散化エンディング" : "🏛 中央集権エンディング", 280, 66);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "13px sans-serif";
-    ctx.fillText("分散 " + dece + " vs 中央 " + cent + "　スコア " + finalScore + " / ベスト " + best, 280, 94);
-    ctx.fillText("タップでもう一回!", 280, 118);
-    hud.textContent = "SCORE " + finalScore + "　BEST " + best;
-    lessons.replaceChildren();
-    const endEl = document.createElement("div");
-    endEl.className = "lesson " + (isDece ? "lesson-best" : "lesson-worst");
-    endEl.textContent = isDece
-      ? "🌐 あなたの選択でネットワークは分散を保った。現実でも、その一票一委任が同じ力を持っています。"
-      : "🏛 ネットワークは中央集権に傾いた。現実でこうならないための鍵が、分散への小さな選択の積み重ねです。";
-    const stolenEl = document.createElement("div");
-    stolenEl.className = "lesson lesson-worst";
-    stolenEl.textContent =
-      "📉 STAGE 2であなたが奪った " + stolenTotal.toLocaleString() + "₳ — 現実では誰かの大切な資産です。奪う側の手口を知った今、守る側に回ろう。";
-    const moral = document.createElement("div");
-    moral.className = "lesson lesson-moral";
-    moral.textContent = "スキャムの手口は「詐欺の手口を知る」で、分散化の話は「ADAの価値」で詳しく解説しています。";
-    lessons.appendChild(endEl);
-    if (stolenTotal > 0) lessons.appendChild(stolenEl);
-    lessons.appendChild(moral);
-  }
-
   function loop() {
     if (!running) return;
     const c = themeColors();
@@ -973,19 +1117,9 @@ function buildRunnerGame() {
     stageFrame += 1;
     score += 0.06;
 
-    // 章の進行
     if (stageFrame >= STAGE_LEN) {
-      if (stage === 3) {
-        showEnding();
-        return;
-      }
-      stage += 1;
-      stageFrame = 0;
-      entities = [];
-      if (stage === 2) {
-        loot = 0;
-        fudActive = false;
-      }
+      onStageClear();
+      return;
     }
 
     P.vy += GRAVITY;
@@ -998,13 +1132,14 @@ function buildRunnerGame() {
     nextSpawn -= 1;
     if (nextSpawn <= 0) spawn();
     const playerBox = { x: P.x, y: P.y - P.h, w: P.w, h: P.h };
+    let died = false;
     entities.forEach((e) => {
       e.x -= speed;
       const eBox = { x: e.x, y: e.y - e.h, w: e.w, h: e.h };
       if (!e.dead && hit(playerBox, eBox)) {
         if (stage === 1) {
           if (e.type === "scam" || e.type === "rug") {
-            gameOver = true;
+            died = true;
           } else if (e.type === "good") {
             score += 50;
             e.dead = true;
@@ -1057,20 +1192,42 @@ function buildRunnerGame() {
     });
     entities = entities.filter((e) => !e.dead && e.x > -40);
 
-    ctx.clearRect(0, 0, 560, 190);
+    ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = c.bg;
-    ctx.fillRect(0, 0, 560, 190);
+    ctx.fillRect(0, 0, W, H);
     if (flash > 0) {
       ctx.fillStyle = stage === 2 ? "rgba(212, 160, 23, 0.15)" : "rgba(229, 72, 77, 0.18)";
-      ctx.fillRect(0, 0, 560, 190);
+      ctx.fillRect(0, 0, W, H);
       flash -= 1;
     }
     ctx.strokeStyle = c.ground;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, GROUND_Y + 2);
-    ctx.lineTo(560, GROUND_Y + 2);
+    ctx.lineTo(W, GROUND_Y + 2);
     ctx.stroke();
+
+    // 画面内ヘッダー(章名 + 進行バー)
+    ctx.fillStyle = c.text;
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(STAGE_META[stage].icon + " " + STAGE_META[stage].title, 12, 22);
+    ctx.fillStyle = "rgba(120,120,128,0.25)";
+    ctx.fillRect(12, 30, W - 24, 5);
+    ctx.fillStyle = c.accent;
+    ctx.fillRect(12, 30, (W - 24) * (stageFrame / STAGE_LEN), 5);
+
+    // 章別サブ情報
+    ctx.textAlign = "right";
+    ctx.font = "bold 13px sans-serif";
+    ctx.fillStyle = c.text;
+    if (stage === 2) {
+      ctx.fillText("未換金 " + loot + "₳" + (fudActive ? " 💢×2" : ""), W - 12, 22);
+    } else if (stage === 3) {
+      ctx.fillText("🌐" + dece + " vs 🏛" + cent, W - 12, 22);
+    } else {
+      ctx.fillText("SCORE " + Math.floor(score), W - 12, 22);
+    }
 
     ctx.textAlign = "center";
     drawRunner(c);
@@ -1085,72 +1242,19 @@ function buildRunnerGame() {
         ctx.font = "bold 12px sans-serif";
         ctx.fillText("₳", e.x + e.w / 2, e.y - e.h / 2 + 4);
       } else {
-        ctx.font = e.type === "boss" ? "30px sans-serif" : "22px sans-serif";
+        ctx.font = e.type === "boss" ? "32px sans-serif" : "24px sans-serif";
         ctx.fillText(e.icon, e.x + e.w / 2, e.y - 4);
       }
     });
 
-    stageBanner();
+    hud.textContent = "SCORE " + Math.floor(score) + "　BEST " + best;
 
-    if (stage === 2) {
-      hud.textContent =
-        "STAGE 2　未換金 " + loot + "₳" + (fudActive ? "　💢×2準備OK" : "") +
-        "　SCORE " + Math.floor(score) + "　BEST " + best;
-    } else if (stage === 3) {
-      hud.textContent =
-        "STAGE 3　🌐" + dece + " vs 🏛" + cent + "　SCORE " + Math.floor(score) + "　BEST " + best;
-    } else {
-      hud.textContent = "STAGE 1　SCORE " + Math.floor(score) + "　BEST " + best;
-    }
-
-    if (gameOver) {
-      running = false;
-      const finalScore = Math.floor(score);
-      if (finalScore > best) {
-        best = finalScore;
-        try {
-          localStorage.setItem("wc_runner_best", String(best));
-        } catch (e) {}
-      }
-      ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
-      ctx.fillRect(0, 0, 560, 190);
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 22px sans-serif";
-      ctx.fillText("GAME OVER", 280, 80);
-      ctx.font = "14px sans-serif";
-      ctx.fillText("スコア " + finalScore + " / ベスト " + best, 280, 108);
-      ctx.fillText("タップでもう一回!", 280, 132);
-      hud.textContent = "SCORE " + finalScore + "　BEST " + best;
-      lessons.replaceChildren();
-      const worst = WORST_PROPOSALS[Math.floor(Math.random() * WORST_PROPOSALS.length)];
-      const bestEx = BEST_PROPOSALS[Math.floor(Math.random() * BEST_PROPOSALS.length)];
-      const worstEl = document.createElement("div");
-      worstEl.className = "lesson lesson-worst";
-      worstEl.textContent = "📉 現実の最悪な提案の例: " + worst;
-      const bestEl = document.createElement("div");
-      bestEl.className = "lesson lesson-best";
-      bestEl.textContent = "📈 現実の最善な提案の例: " + bestEx;
-      const moral = document.createElement("div");
-      moral.className = "lesson lesson-moral";
-      moral.textContent = "ゲームと同じで、現実の提案も「取るか・スルーするか」を見分ける目が大事。投票の前に過去の実績を見よう!";
-      lessons.appendChild(worstEl);
-      lessons.appendChild(bestEl);
-      lessons.appendChild(moral);
+    if (died) {
+      onGameOver();
       return;
     }
     requestAnimationFrame(loop);
   }
-
-  const c0 = themeColors();
-  ctx.fillStyle = c0.bg;
-  ctx.fillRect(0, 0, 560, 190);
-  ctx.fillStyle = c0.text;
-  ctx.textAlign = "center";
-  ctx.font = "bold 20px sans-serif";
-  ctx.fillText("🏃 ADAランナー", 280, 74);
-  ctx.font = "12px sans-serif";
-  ctx.fillText("全3章: ホルダー章 → ラグプル・スキャム章 → 分散化章", 280, 100);
-  ctx.fillText("タップ / スペースキーでスタート&ジャンプ", 280, 122);
 
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
@@ -1162,6 +1266,8 @@ function buildRunnerGame() {
       jump();
     }
   });
+
+  showTitle();
   return box;
 }
 
@@ -1439,10 +1545,7 @@ function renderNode(nodeId, opts = {}) {
   }
 
   if (node.type === "runner-game") {
-    appendBubble(
-      "🏃 **ADAランナー**（全３章）!\n\n**STAGE 1 ホルダー章**: 🧟スキャムと🧻ラグはジャンプでよける（当たると終了）。🟢いい提案は+50、🔴わるい提案は-80、₳コインは+15。\n\n**STAGE 2 ラグプル・スキャム章**: 立場逆転、あなたがゾンビに。🙂ホルダーから資金を奪い（💢FUDを取ると次が2倍）、🏦銀行で換金しないとポイントにならない。\n\n**STAGE 3 分散化章**: 🌐分散と🏛中央集権の2択。まれに出る👑ボスを取ると中央集権度が半減、ただし手下が大量発生。**最後にネットワークがどちらの形になったかが、あなたの答え**です。",
-      "bot"
-    );
+    appendBubble("🏃 **ADAランナー**! 章をえらんであそぼう — 遊び方はゲーム画面の中に出ます:", "bot");
     appendBubble(buildRunnerGame(), "bot");
     clearOptions();
     renderNavButtons({ showBack: state.history.length > 0, showHome: true });
