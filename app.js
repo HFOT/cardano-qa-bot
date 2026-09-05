@@ -21,7 +21,6 @@ const HOME_NODE = {
     { label: "詐欺の手口を知る", next: "scam-root" },
     { label: "ADAの価値は上がるの?", next: "value-root" },
     { label: "Midnightって何?", next: "mn-root" },
-    { label: "🎰 スロットで遊ぶ", next: "game-root" },
   ],
 };
 
@@ -2655,3 +2654,20 @@ document.querySelectorAll(".game-app").forEach((btn) => {
 });
 
 renderNode(HOME_NODE_ID);
+
+// Hover opens recommendations; native details remains available to touch and keyboard users.
+const promoMore = document.getElementById("promo-more");
+if (promoMore) {
+  const hoverPointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  promoMore.addEventListener("pointerenter", (event) => {
+    if (hoverPointer.matches && event.pointerType !== "touch") promoMore.open = true;
+  });
+  promoMore.addEventListener("pointerleave", (event) => {
+    if (hoverPointer.matches && event.pointerType !== "touch" &&
+        !promoMore.contains(document.activeElement)) promoMore.open = false;
+  });
+  promoMore.addEventListener("focusout", (event) => {
+    if (hoverPointer.matches && !promoMore.contains(event.relatedTarget) &&
+        !promoMore.matches(":hover")) promoMore.open = false;
+  });
+}
