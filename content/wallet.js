@@ -256,6 +256,7 @@ export default {
       type: "choice",
       text: "取引所とのやり取りで気になるのは?",
       options: [
+        { label: "ADA取扱取引所と入出庫の注意点", next: "exchange-root" },
         { label: "取引所からウォレットへ送金する時の注意点", next: "wallet-exchange-withdraw" },
         { label: "ウォレットから取引所へ送金する時の注意点", next: "wallet-exchange-deposit" },
         { label: "コールド/ホットウォレットの違い", next: "wallet-exchange-cold-hot" },

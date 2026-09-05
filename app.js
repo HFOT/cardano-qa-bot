@@ -1,11 +1,12 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=37";
-import spoContent from "./content/spo.js?v=37";
-import drepContent from "./content/drep.js?v=37";
-import scamContent from "./content/scam.js?v=37";
-import valueContent from "./content/value.js?v=37";
-import midnightContent from "./content/midnight.js?v=37";
-import gameContent from "./content/game.js?v=37";
+import walletContent from "./content/wallet.js?v=38";
+import spoContent from "./content/spo.js?v=38";
+import drepContent from "./content/drep.js?v=38";
+import scamContent from "./content/scam.js?v=38";
+import valueContent from "./content/value.js?v=38";
+import midnightContent from "./content/midnight.js?v=38";
+import gameContent from "./content/game.js?v=38";
+import exchangeContent from "./content/exchange.js?v=38";
 
 const HOME_NODE_ID = "home";
 
@@ -13,6 +14,7 @@ const HOME_NODE = {
   type: "choice",
   text: "こんにちは。何について知りたいですか?",
   options: [
+    { label: "ADA取扱取引所と入出庫の注意点", next: "exchange-root" },
     { label: "ウォレット操作について", next: "wallet-root" },
     { label: "SPO(プール)選びについて", next: "spo-root" },
     { label: "DRep選びについて", next: "drep-root" },
@@ -32,7 +34,8 @@ function mergeNodes() {
     scamContent.nodes,
     valueContent.nodes,
     midnightContent.nodes,
-    gameContent.nodes
+    gameContent.nodes,
+    exchangeContent.nodes
   );
 }
 
