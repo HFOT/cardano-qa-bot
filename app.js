@@ -1,12 +1,12 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=38";
-import spoContent from "./content/spo.js?v=38";
-import drepContent from "./content/drep.js?v=38";
-import scamContent from "./content/scam.js?v=38";
-import valueContent from "./content/value.js?v=38";
-import midnightContent from "./content/midnight.js?v=38";
-import gameContent from "./content/game.js?v=38";
-import exchangeContent from "./content/exchange.js?v=38";
+import walletContent from "./content/wallet.js?v=39";
+import spoContent from "./content/spo.js?v=39";
+import drepContent from "./content/drep.js?v=39";
+import scamContent from "./content/scam.js?v=39";
+import valueContent from "./content/value.js?v=39";
+import midnightContent from "./content/midnight.js?v=39";
+import gameContent from "./content/game.js?v=39";
+import exchangeContent from "./content/exchange.js?v=39";
 
 const HOME_NODE_ID = "home";
 
@@ -801,38 +801,105 @@ function buildRunnerGame() {
     return b;
   }
 
-  function clearCanvasIdle() {
-    const c = themeColors();
-    ctx.fillStyle = c.bg;
+  function setOverlayView(view, stageNumber = 0) {
+    overlay.dataset.view = view;
+    overlay.dataset.stage = String(stageNumber);
+  }
+
+  function drawWorldBackdrop(stageNumber = 0, tick = 0) {
+    const palettes = {
+      0: ["#07142f", "#092a53", "#06101f"],
+      1: ["#071b3d", "#0b4d79", "#06111f"],
+      2: ["#210c31", "#6a173f", "#100817"],
+      3: ["#071d2d", "#075b69", "#07141f"],
+    };
+    const p = palettes[stageNumber] || palettes[0];
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, p[0]);
+    sky.addColorStop(0.64, p[1]);
+    sky.addColorStop(1, p[2]);
+    ctx.fillStyle = sky;
     ctx.fillRect(0, 0, W, H);
+
+    ctx.save();
+    for (let i = 0; i < 34; i += 1) {
+      const x = (i * 83 + tick * (0.08 + (i % 3) * 0.03)) % (W + 20) - 10;
+      const y = 42 + ((i * 47) % 155);
+      const pulse = 0.22 + ((Math.sin(tick * 0.025 + i) + 1) * 0.12);
+      ctx.fillStyle = `rgba(124, 211, 255, ${pulse})`;
+      ctx.beginPath();
+      ctx.arc(x, y, i % 7 === 0 ? 1.8 : 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const horizon = GROUND_Y - 6;
+    ctx.strokeStyle = stageNumber === 2 ? "rgba(255, 96, 158, .18)" : "rgba(75, 205, 255, .18)";
+    ctx.lineWidth = 1;
+    for (let y = horizon; y < H; y += 9) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.stroke();
+    }
+    for (let x = -W; x < W * 2; x += 42) {
+      const drift = (tick * 0.7) % 42;
+      ctx.beginPath();
+      ctx.moveTo(W / 2, horizon);
+      ctx.lineTo(x - drift, H);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function clearCanvasIdle(stageNumber = 0) {
+    drawWorldBackdrop(stageNumber, frame);
+  }
+
+  function makeStageBtn(n) {
+    const meta = STAGE_META[n];
+    const b = makeBtn("", `runner-btn runner-stage-btn runner-stage-btn-${n}`, () => showStageIntro(n, n));
+    const number = document.createElement("span");
+    number.className = "runner-stage-number";
+    number.textContent = `0${n}`;
+    const copy = document.createElement("span");
+    copy.className = "runner-stage-copy";
+    const title = document.createElement("strong");
+    title.textContent = meta.title.replace(/^STAGE \d+\s*/, "");
+    const desc = document.createElement("small");
+    desc.textContent = n === 1 ? "見抜く・選ぶ・守る" : n === 2 ? "手口を知り、裏側を見る" : "選択がネットワークを変える";
+    copy.appendChild(title);
+    copy.appendChild(desc);
+    const arrow = document.createElement("span");
+    arrow.className = "runner-stage-arrow";
+    arrow.textContent = "→";
+    b.appendChild(number);
+    b.appendChild(copy);
+    b.appendChild(arrow);
+    return b;
   }
 
   // ---- 画面: タイトル(章選択) ----
   function showTitle() {
     running = false;
     playing = false;
-    clearCanvasIdle();
+    clearCanvasIdle(0);
     lessons.replaceChildren();
     hud.textContent = "BEST " + best;
     overlay.replaceChildren();
     overlay.classList.remove("hidden");
+    setOverlayView("title", 0);
     const t = document.createElement("div");
     t.className = "runner-title";
-    t.textContent = "🏃 ADAランナー";
+    t.textContent = "ADA RUNNER";
     const sub = document.createElement("div");
     sub.className = "runner-sub";
-    sub.textContent = "章をえらんで遊ぶ(遊び方は各章の画面で)";
+    sub.textContent = "RUN THE CHAIN · CHOOSE YOUR PATH";
     overlay.appendChild(t);
     overlay.appendChild(sub);
     overlay.appendChild(
-      makeBtn("▶ 全3章 通しプレイ", "runner-btn runner-btn-main", () => showStageIntro(1, "all"))
+      makeBtn("全3章を通してプレイ  →", "runner-btn runner-btn-main", () => showStageIntro(1, "all"))
     );
     [1, 2, 3].forEach((n) => {
-      overlay.appendChild(
-        makeBtn(STAGE_META[n].icon + " " + STAGE_META[n].title, "runner-btn", () =>
-          showStageIntro(n, n)
-        )
-      );
+      overlay.appendChild(makeStageBtn(n));
     });
   }
 
@@ -840,12 +907,13 @@ function buildRunnerGame() {
   function showStageIntro(n, selectedMode) {
     running = false;
     playing = false;
-    clearCanvasIdle();
+    clearCanvasIdle(n);
     overlay.replaceChildren();
     overlay.classList.remove("hidden");
+    setOverlayView("intro", n);
     const t = document.createElement("div");
     t.className = "runner-title";
-    t.textContent = STAGE_META[n].icon + " " + STAGE_META[n].title;
+    t.textContent = STAGE_META[n].title;
     overlay.appendChild(t);
     const rulesBox = document.createElement("div");
     rulesBox.className = "runner-rules";
@@ -1196,19 +1264,21 @@ function buildRunnerGame() {
     entities = entities.filter((e) => !e.dead && e.x > -40);
 
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = c.bg;
-    ctx.fillRect(0, 0, W, H);
+    drawWorldBackdrop(stage, frame);
     if (flash > 0) {
       ctx.fillStyle = stage === 2 ? "rgba(212, 160, 23, 0.15)" : "rgba(229, 72, 77, 0.18)";
       ctx.fillRect(0, 0, W, H);
       flash -= 1;
     }
-    ctx.strokeStyle = c.ground;
+    ctx.strokeStyle = stage === 2 ? "rgba(255, 105, 160, .72)" : "rgba(78, 210, 255, .72)";
+    ctx.shadowColor = ctx.strokeStyle;
+    ctx.shadowBlur = 9;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, GROUND_Y + 2);
     ctx.lineTo(W, GROUND_Y + 2);
     ctx.stroke();
+    ctx.shadowBlur = 0;
 
     // 画面内ヘッダー(章名 + 進行バー)
     ctx.fillStyle = c.text;

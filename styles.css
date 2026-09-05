@@ -1253,20 +1253,25 @@ body {
 .runner-box {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
+  color: #eef8ff;
 }
 
 .runner-stage {
   position: relative;
   width: 100%;
+  isolation: isolate;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 24px 70px rgba(0, 19, 48, 0.34), inset 0 0 0 1px rgba(122, 220, 255, 0.14);
 }
 
 .runner-canvas {
   width: 100%;
   height: auto;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid rgba(100, 211, 255, 0.25);
+  border-radius: 18px;
   cursor: pointer;
   touch-action: manipulation;
   display: block;
@@ -1280,13 +1285,52 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 12px;
-  background: rgba(10, 10, 14, 0.78);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  gap: 10px;
+  padding: 18px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(43, 176, 255, 0.22), transparent 42%),
+    linear-gradient(180deg, rgba(3, 12, 29, 0.42), rgba(3, 8, 19, 0.82));
+  backdrop-filter: blur(5px) saturate(125%);
+  -webkit-backdrop-filter: blur(5px) saturate(125%);
   overflow-y: auto;
+}
+
+.runner-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(180deg, transparent 0 3px, rgba(255, 255, 255, 0.018) 4px);
+  mix-blend-mode: screen;
+}
+
+.runner-overlay > * {
+  position: relative;
+  z-index: 1;
+}
+
+.runner-overlay[data-view="title"] {
+  gap: 6px;
+  padding-block: 10px;
+}
+
+.runner-overlay[data-view="title"] .runner-title {
+  font-size: clamp(20px, 4vw, 25px);
+  line-height: 1.05;
+}
+
+.runner-overlay[data-view="title"] .runner-btn-main {
+  padding-block: 8px;
+}
+
+.runner-overlay[data-view="title"] .runner-stage-btn {
+  padding-block: 5px;
+}
+
+.runner-overlay[data-view="title"] .runner-stage-number {
+  width: 28px;
+  height: 28px;
 }
 
 .runner-overlay.hidden {
@@ -1294,10 +1338,12 @@ body {
 }
 
 .runner-title {
-  font-size: 19px;
-  font-weight: 800;
+  font-size: clamp(20px, 4.5vw, 28px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
   color: #ffffff;
   text-align: center;
+  text-shadow: 0 0 22px rgba(86, 206, 255, 0.72);
 }
 
 .runner-title-good {
@@ -1309,37 +1355,46 @@ body {
 }
 
 .runner-sub {
-  font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.75);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba(178, 230, 255, 0.78);
   text-align: center;
+  margin-top: -5px;
 }
 
 .runner-rules {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 12px;
+  font-size: 11.5px;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.92);
-  text-align: center;
+  text-align: left;
+  width: min(390px, 96%);
+  padding: 10px 14px;
+  border: 1px solid rgba(120, 215, 255, 0.17);
+  border-radius: 12px;
+  background: rgba(3, 13, 30, 0.42);
 }
 
 .runner-btn {
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(126, 217, 255, 0.28);
+  background: rgba(12, 39, 67, 0.64);
   color: #ffffff;
-  border-radius: 9999px;
-  padding: 9px 18px;
+  border-radius: 12px;
+  padding: 10px 18px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 700;
-  width: min(320px, 92%);
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  width: min(390px, 96%);
+  transition: background-color 0.15s ease, transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .runner-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(20, 66, 103, 0.78);
+  border-color: rgba(132, 226, 255, 0.62);
+  box-shadow: 0 0 24px rgba(52, 184, 255, 0.16);
 }
 
 .runner-btn:active {
@@ -1347,15 +1402,66 @@ body {
 }
 
 .runner-btn-main {
-  background: linear-gradient(135deg, var(--user-bubble-a), var(--user-bubble-b));
-  border: none;
+  background: linear-gradient(135deg, #087cff, #0ecbc4);
+  border: 1px solid rgba(192, 247, 255, 0.55);
+  box-shadow: 0 10px 30px rgba(0, 132, 255, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.04em;
 }
 
 .runner-btn-sub {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.16);
   border-color: rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
+}
+
+.runner-stage-btn {
+  display: grid;
+  grid-template-columns: 34px 1fr 22px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  text-align: left;
+}
+
+.runner-stage-btn-1 { --runner-card: #29c6ff; }
+.runner-stage-btn-2 { --runner-card: #ff5d9b; }
+.runner-stage-btn-3 { --runner-card: #24e0b0; }
+
+.runner-stage-number {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: #071222;
+  background: var(--runner-card);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--runner-card) 45%, transparent);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.runner-stage-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.runner-stage-copy strong {
+  color: #fff;
+  font-size: 12.5px;
+}
+
+.runner-stage-copy small {
+  color: rgba(209, 236, 255, 0.64);
+  font-size: 9.5px;
+  font-weight: 500;
+}
+
+.runner-stage-arrow {
+  color: var(--runner-card);
+  font-size: 17px;
 }
 
 .runner-btn:focus-visible {
@@ -1369,11 +1475,42 @@ body {
 }
 
 .runner-hud {
-  font-size: 12px;
+  align-self: flex-end;
+  margin-top: -1px;
+  padding: 4px 9px;
+  border: 1px solid rgba(54, 171, 219, 0.22);
+  border-radius: 999px;
+  background: rgba(10, 42, 62, 0.09);
+  font-size: 10px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--text);
   text-align: right;
+}
+
+@media (max-width: 520px) {
+  .runner-overlay {
+    justify-content: flex-start;
+    padding: 14px 10px;
+  }
+
+  .runner-overlay[data-view="title"] {
+    padding-top: 18px;
+  }
+
+  .runner-btn {
+    padding-block: 8px;
+  }
+
+  .runner-stage-btn {
+    padding-block: 7px;
+  }
+
+  .runner-rules {
+    font-size: 10px;
+    gap: 2px;
+    padding-block: 7px;
+  }
 }
 
 .runner-lessons {
