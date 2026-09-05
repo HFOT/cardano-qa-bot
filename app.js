@@ -1,11 +1,11 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=36";
-import spoContent from "./content/spo.js?v=36";
-import drepContent from "./content/drep.js?v=36";
-import scamContent from "./content/scam.js?v=36";
-import valueContent from "./content/value.js?v=36";
-import midnightContent from "./content/midnight.js?v=36";
-import gameContent from "./content/game.js?v=36";
+import walletContent from "./content/wallet.js?v=37";
+import spoContent from "./content/spo.js?v=37";
+import drepContent from "./content/drep.js?v=37";
+import scamContent from "./content/scam.js?v=37";
+import valueContent from "./content/value.js?v=37";
+import midnightContent from "./content/midnight.js?v=37";
+import gameContent from "./content/game.js?v=37";
 
 const HOME_NODE_ID = "home";
 
@@ -1942,12 +1942,28 @@ async function showChart(days) {
   renderChart(entry);
 }
 
+const chartBackdrop = document.getElementById("chart-backdrop");
+const chartClose = document.getElementById("chart-close");
+
+function openChartPanel() {
+  chartPanel.hidden = false;
+  chartBackdrop.hidden = false;
+  chartBtn.textContent = "チャート ▴";
+  showChart(chartDays);
+}
+
+function closeChartPanel() {
+  chartPanel.hidden = true;
+  chartBackdrop.hidden = true;
+  chartBtn.textContent = "チャート ▾";
+}
+
 chartBtn.addEventListener("click", () => {
-  const opening = chartPanel.hidden;
-  chartPanel.hidden = !opening;
-  chartBtn.textContent = opening ? "チャート ▴" : "チャート ▾";
-  if (opening) showChart(chartDays);
+  if (chartPanel.hidden) openChartPanel();
+  else closeChartPanel();
 });
+chartClose.addEventListener("click", closeChartPanel);
+chartBackdrop.addEventListener("click", closeChartPanel);
 
 document.querySelectorAll(".chart-tab").forEach((b) => {
   b.addEventListener("click", () => showChart(b.dataset.days));

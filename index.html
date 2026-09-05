@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <title>What's Cardano?</title>
-<link rel="stylesheet" href="styles.css?v=36">
+<link rel="stylesheet" href="styles.css?v=37">
 </head>
 <body>
   <div id="chat-app">
@@ -42,7 +42,9 @@
         </span>
         <button id="chart-btn" type="button">チャート ▾</button>
       </div>
+      <div id="chart-backdrop" hidden></div>
       <div id="chart-panel" hidden>
+        <button id="chart-close" type="button" aria-label="チャートを閉じる">✕</button>
         <div id="chart-tabs">
           <button type="button" class="chart-tab" data-days="7">7日</button>
           <button type="button" class="chart-tab active" data-days="30">30日</button>
@@ -118,6 +120,6 @@
       <button type="submit">送信</button>
     </form>
   </div>
-  <script type="module" src="app.js?v=36"></script>
+  <script type="module" src="app.js?v=37"></script>
 </body>
 </html>

@@ -758,12 +758,61 @@ body {
 /* ---------- 価格チャートパネル ---------- */
 
 #chart-panel {
+  position: relative;
   width: min(580px, 100%);
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--panel);
   box-shadow: var(--shadow-pill);
+}
+
+#chart-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  appearance: none;
+  border: none;
+  background: var(--chrome-bg);
+  color: var(--chrome-text);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+#chart-close:hover {
+  background: var(--chrome-bg-hover);
+}
+
+#chart-backdrop {
+  display: none;
+}
+
+/* スマホ: チャートはレイアウトを押し広げず、モーダルとして中央に表示
+   (総合サイトカードなどが隠れないように) */
+@media (max-width: 700px) {
+  #chart-backdrop:not([hidden]) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  #chart-panel:not([hidden]) {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(92vw, 430px);
+    max-height: 82dvh;
+    overflow-y: auto;
+    z-index: 95;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
 }
 
 #chart-tabs {
