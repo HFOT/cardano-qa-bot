@@ -1,12 +1,12 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=40";
-import spoContent from "./content/spo.js?v=40";
-import drepContent from "./content/drep.js?v=40";
-import scamContent from "./content/scam.js?v=40";
-import valueContent from "./content/value.js?v=40";
-import midnightContent from "./content/midnight.js?v=40";
-import gameContent from "./content/game.js?v=40";
-import exchangeContent from "./content/exchange.js?v=40";
+import walletContent from "./content/wallet.js?v=44";
+import spoContent from "./content/spo.js?v=44";
+import drepContent from "./content/drep.js?v=44";
+import scamContent from "./content/scam.js?v=44";
+import valueContent from "./content/value.js?v=44";
+import midnightContent from "./content/midnight.js?v=44";
+import gameContent from "./content/game.js?v=44";
+import exchangeContent from "./content/exchange.js?v=44";
 
 const HOME_NODE_ID = "home";
 
@@ -303,7 +303,7 @@ function buildSlotMachine(config) {
   resultEl.className = "slot-result";
   const noteEl = document.createElement("div");
   noteEl.className = "slot-note";
-  noteEl.textContent = "※遊びです。委任の推奨ではありません。";
+  noteEl.textContent = "※遊びです。開示されるプール・DRepはランダムで、委任の推奨ではありません。";
   box.appendChild(marquee);
   box.appendChild(legendEl);
   box.appendChild(reelsWrap);
@@ -2002,6 +2002,10 @@ function renderNode(nodeId, opts = {}) {
           buildRecommendTable(["Ticker", "評価", "手数料", "ステーク", "委任者"], rows),
           "bot"
         );
+        appendBubble(
+          "この5件は条件を満たすプールからの**ランダム表示**です。順位でも推奨でもなく、選ぶときの**目安**としてご覧ください。委任先の最終判断はご自身でお願いします。",
+          "bot"
+        );
         appendEmbed(RELAY_HEALTH_URL, "Relay Health Ranking", { once: true });
         renderRerollAndNav(nodeId, "🔄 他の5件を見る");
       })
@@ -2044,7 +2048,7 @@ function renderNode(nodeId, opts = {}) {
           "bot"
         );
         appendBubble(
-          "委任前に各DRepの最新の投票実績をGovTool(https://gov.tools)で確認してください。",
+          "この5件は条件を満たすDRepからの**ランダム表示**です。順位でも推奨でもなく、選ぶときの**目安**としてご覧ください。委任前に各DRepの最新の投票実績をGovTool(https://gov.tools)で確認し、最終判断はご自身でお願いします。",
           "bot"
         );
         renderRerollAndNav(nodeId, "🔄 他のDRepを見る");
