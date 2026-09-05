@@ -1964,6 +1964,41 @@ function renderNode(nodeId, opts = {}) {
     return;
   }
 
+  if (node.type === "live-stats") {
+    appendBubble(node.loadingText, "bot");
+    clearOptions();
+    const seq = ++recommendSeq;
+    Promise.all([fetchDrepSnapshot(), fetchRelayHealthPools()])
+      .then(([snap, pools]) => {
+        if (seq !== recommendSeq || state.currentNodeId !== nodeId) return;
+        if (!snap || !snap.totals) throw new Error("no snapshot");
+        const t = snap.totals;
+        const num = (n) => Math.round(n).toLocaleString();
+        // totals の *_m は百万ADA単位。10億単位に直して読みやすくする。
+        const bil = (m) => (m / 1000).toFixed(2) + "B₳";
+        const rows = [
+          ["エポック", String(snap.epoch)],
+          ["ステークプール", pools ? num(pools.length) : "—"],
+          ["DRep", num(t.drep_count)],
+          ["DRepへの委任者", num(t.total_delegators) + "人"],
+          ["アクティブステーク", bil(t.active_stake_m)],
+          ["流通量", bil(t.circulation_m)],
+        ];
+        appendBubble(buildRecommendTable(["項目", "いまの値"], rows), "bot");
+        appendBubble(
+          "出典: DRep端末の公開スナップショット(" + snap.generated_at + ")と、リレー健全性ランキング。**数字は日々変わります。**",
+          "bot"
+        );
+        renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+      })
+      .catch(() => {
+        if (seq !== recommendSeq || state.currentNodeId !== nodeId) return;
+        appendBubble(node.errorText, "bot");
+        renderNavButtons({ showBack: state.history.length > 0, showHome: true });
+      });
+    return;
+  }
+
   if (node.type === "recommend-pool") {
     appendBubble(node.loadingText, "bot");
     clearOptions();
@@ -2267,6 +2302,19 @@ async function fetchRelayHealthPools() {
   if (!jsonText) return null;
   _poolsCache = JSON.parse(jsonText);
   return _poolsCache;
+}
+
+// DRep端末が毎日書き出しているスナップショット。同一オリジンなのでCORSは起きない。
+const DREP_SNAPSHOT_URL = "https://hfot.github.io/drep-terminal-v6/drep-snapshot.json";
+
+let _snapshotCache = null;
+
+async function fetchDrepSnapshot() {
+  if (_snapshotCache) return _snapshotCache;
+  const res = await fetch(DREP_SNAPSHOT_URL);
+  if (!res.ok) return null;
+  _snapshotCache = await res.json();
+  return _snapshotCache;
 }
 
 const DREP_TERMINAL_URL = "https://hfot.github.io/drep-terminal-v6/";
