@@ -1,11 +1,11 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=29";
-import spoContent from "./content/spo.js?v=29";
-import drepContent from "./content/drep.js?v=29";
-import scamContent from "./content/scam.js?v=29";
-import valueContent from "./content/value.js?v=29";
-import midnightContent from "./content/midnight.js?v=29";
-import gameContent from "./content/game.js?v=29";
+import walletContent from "./content/wallet.js?v=30";
+import spoContent from "./content/spo.js?v=30";
+import drepContent from "./content/drep.js?v=30";
+import scamContent from "./content/scam.js?v=30";
+import valueContent from "./content/value.js?v=30";
+import midnightContent from "./content/midnight.js?v=30";
+import gameContent from "./content/game.js?v=30";
 
 const HOME_NODE_ID = "home";
 
@@ -198,9 +198,20 @@ const SLOT_FILLERS = [
   { key: "lucky", icon: "⭐", label: "LUCKY" },
 ];
 const SLOT_MISS_LINES = [
-  "はずれ! でも₳は1枚も減っていないのでご安心を。",
-  "うーん、噛み合わない。もう一回!",
-  "リールの神は気まぐれ。次いこう次!",
+  "はずれ! でも₳は1枚も減っていない。そこらのカジノより良心的。",
+  "うーん、噛み合わない。ガバナンスと同じですね。",
+  "リールの神は気まぐれ。DRepの投票率より読めない。",
+  "はずれ。でも大丈夫、あなたのシードフレーズは無事です。",
+];
+const SLOT_JACKPOT_LINES = [
+  "3つ揃いました。もう委任変えちゃいましょうかｗｗ(※遊びです)",
+  "これはもう運命では? 責任は取りませんが、縁は感じます。",
+  "台が光りました。あなたの指、才能あります。",
+  "おめでとうございます! 賞金は出ませんが知識が増えます。",
+  "世の中には2種類の人間がいる。委任か、委任以外か。— 今日のあなたは前者。",
+  "いつ委任するか? 今でしょ! (※ご自身の判断でｗ)",
+  "そこに委任はあるんか? …ここにあります。",
+  "委任は裏切らない。筋肉と同じで。",
 ];
 
 function coinShower(container, count) {
@@ -282,27 +293,33 @@ function buildSlotMachine(config) {
   box.appendChild(resultEl);
   box.appendChild(noteEl);
 
-  // 出目を作る: ターゲット1つは保証、残りは確率で決まる
-  function rollOutcome() {
-    const symbols = [config.target, null, null];
-    for (let i = 1; i < 3; i++) {
-      symbols[i] =
-        Math.random() < 0.38
-          ? config.target
-          : SLOT_FILLERS[Math.floor(Math.random() * SLOT_FILLERS.length)];
-    }
-    // ターゲット保証枠の位置をシャッフル
-    for (let i = symbols.length - 1; i > 0; i--) {
+  // 出目を作る: ターゲット1つは保証、残りは確率で決まる。
+  // ターゲットのマスには実在の名前(Ticker/DRep名)が入り、
+  // 大当たりのときは3つとも「同じ名前」が揃う。
+  function rollOutcome(candidates) {
+    const flags = [true, false, false];
+    for (let i = 1; i < 3; i++) flags[i] = Math.random() < 0.38;
+    for (let i = flags.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      const t = symbols[i];
-      symbols[i] = symbols[j];
-      symbols[j] = t;
+      const t = flags[i];
+      flags[i] = flags[j];
+      flags[j] = t;
     }
-    return symbols;
+    const hits = flags.filter(Boolean).length;
+    const winner =
+      hits === 3 ? candidates[Math.floor(Math.random() * candidates.length)] : null;
+    const symbols = flags.map((isTarget) => {
+      if (!isTarget) {
+        return SLOT_FILLERS[Math.floor(Math.random() * SLOT_FILLERS.length)];
+      }
+      const item = winner || candidates[Math.floor(Math.random() * candidates.length)];
+      return { key: config.target.key, icon: config.target.icon, label: config.labelFor(item) };
+    });
+    return { symbols, hits, winner };
   }
 
-  function countKey(outcome, keyOrTarget) {
-    return outcome.filter((s) => s === keyOrTarget || s.key === keyOrTarget).length;
+  function countKey(symbols, key) {
+    return symbols.filter((s) => s.key === key).length;
   }
 
   let spinning = false;
@@ -327,32 +344,56 @@ function buildSlotMachine(config) {
       spinBtn.disabled = false;
       return;
     }
-    const outcome = rollOutcome();
+    const outcome = rollOutcome(candidates);
     const stopAt = [1100, 1700, 2400];
     const startedAt = performance.now();
     const stopped = [false, false, false];
-    const allSpin = [config.target].concat(SLOT_FILLERS);
+
+    // スピン中もターゲットのマスには実在の名前がチラチラ流れる
+    function randomSpinSymbol() {
+      if (Math.random() < 0.34) {
+        const item = candidates[Math.floor(Math.random() * candidates.length)];
+        return { key: config.target.key, icon: config.target.icon, label: config.labelFor(item) };
+      }
+      return SLOT_FILLERS[Math.floor(Math.random() * SLOT_FILLERS.length)];
+    }
 
     function finish() {
-      const hits = outcome.filter((s) => s === config.target).length;
-      const scams = countKey(outcome, "scam");
-      const rugs = countKey(outcome, "rug");
-      if (hits === 3) {
-        // 🏆 大当たり: 実在の1件を開示 + 金貨シャワー
+      const scams = countKey(outcome.symbols, "scam");
+      const rugs = countKey(outcome.symbols, "rug");
+      if (outcome.hits === 3) {
+        // 🏆 大当たり: 同じ名前が3つ揃う → その実在の1件を説明つきで開示 + 金貨シャワー
         reels.forEach((r) => r.classList.add("aligned", "tier-s"));
-        const winner = candidates[Math.floor(Math.random() * candidates.length)];
+        const winner = outcome.winner;
         coinShower(box, 26);
         nameEl.textContent = "🏆 JACKPOT! " + config.reelText(winner);
         nameEl.classList.add("slot-name-win");
-        resultEl.replaceChildren(config.buildResult(winner));
-      } else if (hits === 2) {
+        const wrap = document.createElement("div");
+        const joke = document.createElement("div");
+        joke.className = "slot-joke";
+        joke.textContent =
+          SLOT_JACKPOT_LINES[Math.floor(Math.random() * SLOT_JACKPOT_LINES.length)];
+        const desc = document.createElement("div");
+        desc.className = "slot-desc";
+        desc.textContent = config.describe(winner);
+        wrap.appendChild(joke);
+        wrap.appendChild(desc);
+        wrap.appendChild(config.buildResult(winner));
+        resultEl.replaceChildren(wrap);
+      } else if (outcome.hits === 2) {
         coinShower(box, 5);
-        nameEl.textContent = "おしい! あと1つで大当たりだった…!";
-      } else if (scams >= 2) {
-        nameEl.textContent = "🧟×" + scams + " スキャム大量発生! DMのリンクは踏まないで!";
+        nameEl.textContent = "おしい! あと1つ! 台は叩かないでください!";
+      } else if (scams === 3) {
+        nameEl.textContent = "🧟🧟🧟 スキャムフィーバー!!(最悪のフィーバー) シードフレーズを抱えて逃げて!";
         nameEl.classList.add("slot-name-bad");
-      } else if (rugs >= 2) {
-        nameEl.textContent = "🧻×" + rugs + " ラグ発生! 敷物ごと持っていかれるところだった…";
+      } else if (scams === 2) {
+        nameEl.textContent = "🧟×2 スキャムゾンビ発生! DMは開けるな! 走れ!";
+        nameEl.classList.add("slot-name-bad");
+      } else if (rugs === 3) {
+        nameEl.textContent = "🧻🧻🧻 全面ラグ張り!! この部屋、床がない!";
+        nameEl.classList.add("slot-name-bad");
+      } else if (rugs === 2) {
+        nameEl.textContent = "🧻×2 ラグ発生! 敷物ごと資産が滑っていく〜!";
         nameEl.classList.add("slot-name-bad");
       } else {
         nameEl.textContent = SLOT_MISS_LINES[Math.floor(Math.random() * SLOT_MISS_LINES.length)];
@@ -369,11 +410,11 @@ function buildSlotMachine(config) {
         if (stopped[i]) return;
         if (elapsed >= stopAt[i]) {
           stopped[i] = true;
-          setReelSymbol(r, outcome[i]);
+          setReelSymbol(r, outcome.symbols[i]);
           r.className = "slot-reel stopped";
         } else {
           allStopped = false;
-          setReelSymbol(r, allSpin[Math.floor(Math.random() * allSpin.length)]);
+          setReelSymbol(r, randomSpinSymbol());
         }
       });
       if (allStopped) {
@@ -1116,6 +1157,17 @@ function renderNode(nodeId, opts = {}) {
         );
       },
       target: { key: "pool", icon: "🏊", label: "POOL" },
+      labelFor: (p) => p.ticker.slice(0, 6),
+      describe: (p) => {
+        const grade = p.score >= 95 ? "S" : "A";
+        const sizeText = p.stake < 5000000 ? "小規模で応援しがいのある" : p.stake < 20000000 ? "中規模の安定した" : "大規模な";
+        const satPct = Math.round((p.sat || 0) * 100);
+        return (
+          "[" + p.ticker + "] は健全性" + grade + "グレード(" + p.score + "点)の" + sizeText +
+          "プール。委任者" + p.delegators + "人、飽和度" + satPct + "%。" +
+          (satPct < 50 ? "サチュレーションに余裕があり、非集中化に貢献できる委任先候補です。" : "人気プールなので飽和度には注意を。")
+        );
+      },
       reelText: (p) => "[" + p.ticker + "]",
       buildResult: (p) => {
         const grade = p.score >= 95 ? "S" : "A";
@@ -1144,6 +1196,13 @@ function renderNode(nodeId, opts = {}) {
     const machine = buildSlotMachine({
       getCandidates: async () => fetchDrepTarget15Candidates(),
       target: { key: "drep", icon: "🗳️", label: "DRep" },
+      labelFor: (d) => (d.name || "DRep").slice(0, 7),
+      describe: (d) => {
+        return (
+          (d.name || "このDRep") + " は投票力ランキング#" + d.rank + "、シェア" + d.sharePct.toFixed(2) +
+          "%のDRep。上位に集中しすぎない規模で、Target 15(上位10者で15%未満)の分散思想に合う候補です。委任前にGovToolで投票実績を確認してください。"
+        );
+      },
       reelText: (d) => d.name || d.id.slice(0, 16) + "…",
       buildResult: (d) => {
         const wrap = document.createElement("div");

@@ -991,6 +991,20 @@ body {
   color: #b7a4d6;
 }
 
+.slot-joke {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffd75a;
+  margin-bottom: 6px;
+}
+
+.slot-desc {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #e6dcf5;
+  margin-bottom: 8px;
+}
+
 .slot-cabinet .slot-result {
   color: #f4ecff;
 }
