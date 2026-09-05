@@ -2353,3 +2353,25 @@ button.battle-stat:hover {
     padding-right: 7px;
   }
 }
+
+#tools-popup {
+  width: min(480px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, .3);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+#tools-popup::backdrop { background: rgba(0, 0, 0, .4); }
+.tools-popup-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+.tools-popup-head button { flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--chrome-bg); color: var(--text); font-size: 25px; cursor: pointer; }
+#tools-popup #promo-apps { gap: 4px; }
+#tools-popup .app-icon { width: 36px; height: 36px; border-radius: 9px; }
+#tools-popup #promo-apps .app { gap: 10px; padding: 7px 4px; }
+#tools-popup .app-desc { font-size: 11px; line-height: 1.4; }
+body:has(#tools-popup[open]) { overflow: hidden; }

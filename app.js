@@ -1,12 +1,12 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=54";
-import spoContent from "./content/spo.js?v=54";
-import drepContent from "./content/drep.js?v=54";
-import scamContent from "./content/scam.js?v=54";
-import valueContent from "./content/value.js?v=54";
-import midnightContent from "./content/midnight.js?v=54";
-import gameContent from "./content/game.js?v=54";
-import exchangeContent from "./content/exchange.js?v=54";
+import walletContent from "./content/wallet.js?v=55";
+import spoContent from "./content/spo.js?v=55";
+import drepContent from "./content/drep.js?v=55";
+import scamContent from "./content/scam.js?v=55";
+import valueContent from "./content/value.js?v=55";
+import midnightContent from "./content/midnight.js?v=55";
+import gameContent from "./content/game.js?v=55";
+import exchangeContent from "./content/exchange.js?v=55";
 
 const HOME_NODE_ID = "home";
 
@@ -2669,5 +2669,33 @@ if (promoMore) {
   promoMore.addEventListener("focusout", (event) => {
     if (hoverPointer.matches && !promoMore.contains(event.relatedTarget) &&
         !promoMore.matches(":hover")) promoMore.open = false;
+  });
+}
+// Touch recommendations use the top layer so the promo scroller cannot clip them.
+if (promoMore) {
+  const summary = promoMore.querySelector("summary");
+  const apps = document.getElementById("promo-apps");
+  const popup = document.createElement("dialog");
+  popup.id = "tools-popup";
+  popup.setAttribute("aria-labelledby", "tools-popup-title");
+  popup.innerHTML = '<div class="tools-popup-head"><strong id="tools-popup-title">おすすめツール（CORN作成）</strong><button type="button" aria-label="閉じる">×</button></div>';
+  document.body.append(popup);
+  summary.addEventListener("click", (event) => {
+    if (!window.matchMedia("(max-width: 700px), (hover: none)").matches) return;
+    event.preventDefault();
+    promoMore.open = false;
+    popup.append(apps);
+    popup.showModal();
+  });
+  popup.querySelector("button").addEventListener("click", () => popup.close());
+  popup.addEventListener("click", (event) => {
+    if (event.target !== popup) return;
+    const box = popup.getBoundingClientRect();
+    if (event.clientX < box.left || event.clientX > box.right ||
+        event.clientY < box.top || event.clientY > box.bottom) popup.close();
+  });
+  popup.addEventListener("close", () => {
+    promoMore.append(apps);
+    summary.focus({ preventScroll: true });
   });
 }
