@@ -1212,23 +1212,26 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  min-height: 78px;
-  padding-left: clamp(18px, 4vw, 32px);
+  min-height: 88px;
+  padding: 14px 0 0 clamp(18px, 4vw, 32px);
   border-left: 1px solid rgba(55, 178, 255, 0.24);
 }
 
 .game-feature-label {
   position: absolute;
-  top: -4px;
-  left: 50%;
-  translate: -30% 0;
-  padding: 3px 7px;
+  z-index: 4;
+  top: 0;
+  left: calc(50% + clamp(9px, 2vw, 16px));
+  translate: -50% 0;
+  padding: 4px 8px;
   border: 1px solid rgba(53, 226, 180, 0.45);
   border-radius: 999px;
   color: #51e7bd;
-  background: color-mix(in srgb, var(--surface) 88%, #082d31);
+  background: #092126;
+  box-shadow: 0 0 12px rgba(53, 226, 180, 0.2);
   font: 850 7px/1 ui-monospace, monospace;
   letter-spacing: 0.13em;
+  white-space: nowrap;
 }
 
 .game-app {
@@ -1297,6 +1300,10 @@ body {
   font-weight: 850;
 }
 
+.game-app-featured {
+  margin-top: 7px;
+}
+
 .game-feature-note {
   margin-top: -3px;
   color: var(--muted);
@@ -1311,8 +1318,8 @@ body {
 @media (max-width: 620px) {
   #game-row { flex-direction: column; gap: 12px; }
   .game-row-standard { width: 100%; }
-  .game-row-featured { width: min(210px, 88%); min-height: 70px; justify-content: center; padding: 11px 0 0; border-top: 1px solid rgba(55, 178, 255, 0.24); border-left: 0; }
-  .game-feature-label { top: -6px; left: 50%; translate: -50% 0; }
+  .game-row-featured { width: min(210px, 88%); min-height: 80px; justify-content: center; padding: 16px 0 0; border-top: 1px solid rgba(55, 178, 255, 0.24); border-left: 0; }
+  .game-feature-label { top: -7px; left: 50%; translate: -50% 0; }
 }
 
 /* ---------- 🛡 Exchange Gatekeeper ---------- */
