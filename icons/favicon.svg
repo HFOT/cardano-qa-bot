@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="What's Cardano?">
+  <title>What's Cardano?</title>
+  <defs>
+    <!-- ヒーロータイトルと同じ配色(青→紫→ティール)。
+         ティザーサイトの icons/qa.svg と同じ形を使い、色だけ本体に合わせている -->
+    <linearGradient id="g" x1="5" y1="4" x2="27" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0a84ff"/>
+      <stop offset="0.55" stop-color="#8b6cff"/>
+      <stop offset="1" stop-color="#21d4c2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 姉妹サイト群と共通の暗い角丸地 -->
+  <rect width="32" height="32" rx="7.5" fill="#0a0726"/>
+
+  <!-- 吹き出し。線を太くしてあるのは意図的で、16px では細い線は潰れて消える。
+       尻尾は左下向き = 返事が返ってくる側 -->
+  <path d="M9 7.5h14a3.5 3.5 0 0 1 3.5 3.5v7a3.5 3.5 0 0 1-3.5 3.5H14l-5.5 4.5v-4.5H9A3.5 3.5 0 0 1 5.5 18v-7A3.5 3.5 0 0 1 9 7.5Z"
+        fill="none" stroke="url(#g)" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- 「?」は 16px では潰れるので、残るもの(明るい一点)だけにしている -->
+  <circle cx="16" cy="14.5" r="3" fill="#3d9bff"/>
+</svg>
