@@ -639,6 +639,12 @@ body {
   border-bottom-right-radius: 5px;
 }
 
+.bubble.has-block:has(.gatekeeper) {
+  width: min(560px, calc(100% - 32px));
+  max-width: min(560px, calc(100% - 32px));
+  box-sizing: border-box;
+}
+
 /* ---------- Option pills ---------- */
 
 #chat-options {
@@ -1181,7 +1187,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .slot-reel.aligned,
   .slot-reel.stopped,
-  .slot-coin {
+  .slot-coin,
+  .game-icon-gatekeeper {
     animation: none;
   }
 }
@@ -1190,9 +1197,38 @@ body {
 
 #game-row {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 4vw, 34px);
+}
+
+.game-row-standard {
+  display: flex;
   justify-content: center;
   gap: clamp(10px, 2.6vw, 22px);
+}
+
+.game-row-featured {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 78px;
+  padding-left: clamp(18px, 4vw, 32px);
+  border-left: 1px solid rgba(55, 178, 255, 0.24);
+}
+
+.game-feature-label {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  translate: -30% 0;
+  padding: 3px 7px;
+  border: 1px solid rgba(53, 226, 180, 0.45);
+  border-radius: 999px;
+  color: #51e7bd;
+  background: color-mix(in srgb, var(--surface) 88%, #082d31);
+  font: 850 7px/1 ui-monospace, monospace;
+  letter-spacing: 0.13em;
 }
 
 .game-app {
@@ -1250,8 +1286,33 @@ body {
 }
 
 .game-icon-gatekeeper {
+  position: relative;
   background: linear-gradient(135deg, #172445, #087cff 62%, #20d3b0);
-  box-shadow: 0 3px 16px rgba(8, 124, 255, 0.34);
+  box-shadow: 0 0 0 1px rgba(126, 230, 255, 0.46), 0 0 18px rgba(8, 124, 255, 0.64), 0 0 32px rgba(32, 211, 176, 0.28);
+  animation: risk-icon-glow 2.2s ease-in-out infinite;
+}
+
+.game-app-featured .app-name {
+  color: var(--text);
+  font-weight: 850;
+}
+
+.game-feature-note {
+  margin-top: -3px;
+  color: var(--muted);
+  font-size: 8px;
+}
+
+@keyframes risk-icon-glow {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.06); filter: brightness(1.22); box-shadow: 0 0 0 3px rgba(80, 208, 255, 0.16), 0 0 25px rgba(8, 124, 255, 0.78), 0 0 42px rgba(32, 211, 176, 0.38); }
+}
+
+@media (max-width: 620px) {
+  #game-row { flex-direction: column; gap: 12px; }
+  .game-row-standard { width: 100%; }
+  .game-row-featured { width: min(210px, 88%); min-height: 70px; justify-content: center; padding: 11px 0 0; border-top: 1px solid rgba(55, 178, 255, 0.24); border-left: 0; }
+  .game-feature-label { top: -6px; left: 50%; translate: -50% 0; }
 }
 
 /* ---------- 🛡 Exchange Gatekeeper ---------- */
@@ -1261,6 +1322,8 @@ body {
   --gate-green: #35e2b4;
   --gate-red: #ff6376;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   overflow: hidden;
   border: 1px solid rgba(80, 185, 255, 0.28);
   border-radius: 18px;
@@ -1330,6 +1393,8 @@ body {
 }
 .gatekeeper-risk { color: #ff91a0; border-color: rgba(255, 99, 118, 0.32); background: rgba(255, 99, 118, 0.09); }
 .gatekeeper-body h3 { margin: 1px 0 0; color: #fff; font-size: clamp(18px, 4vw, 24px); letter-spacing: 0.02em; }
+.gatekeeper-story { margin: -1px 0 1px; padding: 11px 12px; border-left: 3px solid var(--gate-blue); color: rgba(226, 243, 255, 0.88); background: rgba(39, 139, 211, 0.08); font-size: 11.5px; line-height: 1.65; }
+.gatekeeper-story span { display: block; margin-bottom: 4px; color: #73caff; font: 850 8px/1 ui-monospace, monospace; letter-spacing: 0.16em; }
 
 .gatekeeper-fields { display: grid; gap: 1px; overflow: hidden; border: 1px solid rgba(97, 193, 255, 0.16); border-radius: 11px; background: rgba(91, 183, 255, 0.12); }
 .gatekeeper-fields > div { display: grid; grid-template-columns: minmax(92px, 0.32fr) 1fr; gap: 10px; align-items: start; padding: 10px 12px; background: rgba(3, 14, 30, 0.88); }
@@ -1384,11 +1449,17 @@ body {
 .gatekeeper-transfer-actions { display: grid; grid-template-columns: 1fr 1.25fr; gap: 8px; margin-top: auto; }
 .gatekeeper-transfer-actions .gatekeeper-next { width: 100%; min-width: 0; margin: 0; }
 .gatekeeper-cancel { background: rgba(23, 59, 84, 0.75); }
+.gatekeeper-final-no { border-color: rgba(53, 226, 180, 0.48); background: linear-gradient(135deg, #118b75, #20c99d); }
 .gatekeeper-send-final { border-color: rgba(255, 99, 118, 0.5); background: linear-gradient(135deg, #d83c55, #ff6a65); box-shadow: 0 10px 28px rgba(255, 70, 90, 0.2); }
 .gatekeeper-danger-mark { display: grid; place-items: center; align-self: center; width: 84px; height: 84px; margin-top: 20px; clip-path: polygon(50% 0, 100% 100%, 0 100%); color: #180307; background: var(--gate-red); font: 950 40px/1 ui-monospace, monospace; padding-top: 20px; filter: drop-shadow(0 0 20px rgba(255, 99, 118, 0.32)); }
+.gatekeeper-safe-mark { display: grid; place-items: center; align-self: center; width: 84px; height: 84px; margin-top: 20px; border: 2px solid var(--gate-green); border-radius: 50%; color: var(--gate-green); font: 950 40px/1 ui-monospace, monospace; box-shadow: 0 0 28px rgba(53, 226, 180, 0.22); }
 .gatekeeper-body .gatekeeper-danger-title { color: var(--gate-red); text-align: center; }
+.gatekeeper-body .gatekeeper-safe-title { color: var(--gate-green); text-align: center; }
 .gatekeeper-danger-copy { margin: 0; padding: 14px; border: 1px solid rgba(255, 99, 118, 0.35); border-radius: 11px; color: rgba(255, 235, 238, 0.9); background: rgba(255, 99, 118, 0.09); font-size: 11.5px; line-height: 1.65; }
+.gatekeeper-safe-copy { margin: 0; padding: 14px; border: 1px solid rgba(53, 226, 180, 0.35); border-radius: 11px; color: rgba(230, 255, 247, 0.9); background: rgba(53, 226, 180, 0.09); font-size: 11.5px; line-height: 1.65; }
 .gatekeeper-danger-facts { display: grid; gap: 5px; color: #ff9eaa; font-size: 10px; }
+.gatekeeper-danger-facts span:not(.is-mismatch) { color: rgba(205, 237, 255, 0.78); }
+.gatekeeper-danger-facts .is-mismatch { color: #ff8191; font-weight: 800; }
 
 @media (max-width: 520px) {
   #game-row { gap: 10px 14px; }
@@ -1401,6 +1472,7 @@ body {
   .gatekeeper-actions { grid-template-columns: 1fr; }
   .gatekeeper-action { min-height: 40px; }
   .gatekeeper-transfer-actions { grid-template-columns: 1fr; }
+  .bubble.has-block:has(.gatekeeper) { width: calc(100% - 16px); max-width: calc(100% - 16px); padding-inline: 8px; }
 }
 
 /* ---------- 🏃 ADAランナー ---------- */

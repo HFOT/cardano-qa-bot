@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <title>What's Cardano?</title>
-<link rel="stylesheet" href="styles.css?v=40">
+<link rel="stylesheet" href="styles.css?v=42">
 </head>
 <body>
   <div id="chat-app">
@@ -55,26 +55,32 @@
         <div id="chart-meta"></div>
       </div>
       <div id="game-row" aria-label="ゲームで遊ぶ">
-        <button type="button" class="game-app" data-node="game-slot-pool">
-          <span class="game-icon game-icon-slot" aria-hidden="true">🎰</span>
-          <span class="app-name">SPOスロット</span>
-        </button>
-        <button type="button" class="game-app" data-node="game-slot-drep">
-          <span class="game-icon game-icon-drep" aria-hidden="true">🎰</span>
-          <span class="app-name">DRepスロット</span>
-        </button>
-        <button type="button" class="game-app" data-node="game-battle">
-          <span class="game-icon game-icon-battle" aria-hidden="true">⚔️</span>
-          <span class="app-name">カードバトル</span>
-        </button>
-        <button type="button" class="game-app" data-node="game-runner">
-          <span class="game-icon game-icon-runner" aria-hidden="true">🏃</span>
-          <span class="app-name">ADAランナー</span>
-        </button>
-        <button type="button" class="game-app" data-node="game-gatekeeper">
-          <span class="game-icon game-icon-gatekeeper" aria-hidden="true">🛡️</span>
-          <span class="app-name">Gatekeeper</span>
-        </button>
+        <div class="game-row-standard" aria-label="ゲーム">
+          <button type="button" class="game-app" data-node="game-slot-pool">
+            <span class="game-icon game-icon-slot" aria-hidden="true">🎰</span>
+            <span class="app-name">SPOスロット</span>
+          </button>
+          <button type="button" class="game-app" data-node="game-slot-drep">
+            <span class="game-icon game-icon-drep" aria-hidden="true">🎰</span>
+            <span class="app-name">DRepスロット</span>
+          </button>
+          <button type="button" class="game-app" data-node="game-battle">
+            <span class="game-icon game-icon-battle" aria-hidden="true">⚔️</span>
+            <span class="app-name">カードバトル</span>
+          </button>
+          <button type="button" class="game-app" data-node="game-runner">
+            <span class="game-icon game-icon-runner" aria-hidden="true">🏃</span>
+            <span class="app-name">ADAランナー</span>
+          </button>
+        </div>
+        <div class="game-row-featured" aria-label="重要な安全チェック">
+          <span class="game-feature-label">IMPORTANT</span>
+          <button type="button" class="game-app game-app-featured" data-node="game-gatekeeper">
+            <span class="game-icon game-icon-gatekeeper" aria-hidden="true">🛡️</span>
+            <span class="app-name">リスク度チェック</span>
+            <span class="game-feature-note">送金前に確認</span>
+          </button>
+        </div>
       </div>
       <details id="promo-more">
         <summary>おすすめツール(CORN作成)を5つ見る<span class="chev" aria-hidden="true">▾</span></summary>
@@ -124,6 +130,6 @@
       <button type="submit">送信</button>
     </form>
   </div>
-  <script type="module" src="app.js?v=40"></script>
+  <script type="module" src="app.js?v=42"></script>
 </body>
 </html>

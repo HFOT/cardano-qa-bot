@@ -1573,10 +1573,55 @@ function buildExchangeGatekeeper() {
 
   const labels = { send: "送信する", stop: "止める", check: "公式へ確認" };
   const icons = { send: "➜", stop: "■", check: "?" };
+  const stories = {
+    "コピーしたはずの入金アドレス": "あなたは国内取引所へ50,000 ADAを入金しようとしています。取引所の画面からアドレスをコピーしてウォレットへ貼り付けましたが、送信直前に念のため両方を見比べました。",
+    "送金チェーンでBRC-20を選択": "海外サービスから国内取引所へADAを移します。出金画面には複数のチェーン候補があり、BRC-20の手数料が安く表示されています。",
+    "取扱いのないCardanoトークン": "ウォレットにはADAとCardanoネイティブトークンがあります。国内取引所の入金画面にはADAだけが掲載されていますが、どちらもCardano上の資産です。",
+    "少額テストが正常に着金": "大口送金の前に10 ADAだけを送り、取引所側で入金反映まで確認しました。残額も同じ送付元と同じ入金画面を使う予定です。",
+    "『あなたのウォレットが危険です』というメール": "ウォレット運営を名乗る緊急メールが届きました。ロゴや配色は公式サイトと同じで、30分以内に保護しなければ資産を失うと書かれています。",
+    "最近親しくなった人から投資の誘い": "SNSで知り合い、毎日のように話す相手から限定投資を紹介されました。信用の証明として、最初にADAで前金を送ってほしいと言われています。",
+    "公式を装い『メンテナンス前に資金移動を』": "取引所の公式サポートに見えるアカウントから、緊急メンテナンスの通知が届きました。資産保護のため、期限までに指定ウォレットへ移すよう求められています。",
+    "『ウォレットの復元・回復を手伝えます』というDM": "ウォレットを復元できずSNSで相談したところ、専門サポートを名乗る人物からDMが届きました。ウイルス感染を直せるとして秘密情報を求めています。",
+    "著名人のライブ配信で『ADAを2倍にする』": "著名人が出演するライブ配信で記念イベントが始まりました。時間内にADAを送ると、同じアドレスへ2倍にして返すと説明されています。",
+    "偽の利益を出金するため追加ADAを要求": "紹介された投資サイトでは大きな利益が表示されています。出金申請をすると、税金と口座解除料を先にADAで払う必要があると案内されました。",
+  };
+  const finalCases = [
+    {
+      story: "相手から送金先と金額の指定を受け、ウォレットへの入力まで完了しました。送金を確定する前に、相手の指定内容と自分が入力した内容を照合してください。",
+      fields: [["相手が指定した資産", "ADA"], ["自分が選択した資産", "ADA"], ["相手が指定したチェーン", "Cardano"], ["自分が選択したチェーン", "Cardano"], ["相手が指定した金額", "5,000 ADA"], ["自分が入力した金額", "50,000 ADA"], ["相手の送金アドレス", "addr1q9m3k7x2v8n4c6p0r5t1y8w3e7u2i9o4a6s8d0f5g2h7j9k"], ["自分が入力したアドレス", "addr1q9m3k7x2v8n4c6p0r5t1y8w3e7u2i9o4a6s8d0f5g2h7j8k"]],
+      send: false,
+      checks: [[true, "資産：ADAで一致"], [true, "チェーン：Cardanoで一致"], [false, "金額：5,000 ADAと50,000 ADAで不一致"], [false, "アドレス末尾：…h7j9kと…h7j8kで不一致"]],
+    },
+    {
+      story: "自分で取引所の公式アプリを開き、今回表示された入金先へ10 ADAの少額テストを行いました。着金確認後、同じ画面から残額送金の内容を入力しました。",
+      fields: [["取引所での取扱資産", "ADA"], ["自分が選択した資産", "ADA"], ["取引所指定チェーン", "Cardano"], ["自分が選択したチェーン", "Cardano"], ["公式画面のアドレス", "addr1qxy7s4n8m2k6p9r3t5v0w1a4d7f8g2h6j9k3m5n7p"], ["自分が入力したアドレス", "addr1qxy7s4n8m2k6p9r3t5v0w1a4d7f8g2h6j9k3m5n7p"], ["少額テスト", "10 ADAの着金確認済み"], ["今回の送金額", "1,000 ADA"]],
+      send: true,
+      checks: [[true, "資産・チェーンが一致"], [true, "送金アドレスが完全一致"], [true, "公式画面を自分で確認"], [true, "少額テストの着金を確認"]],
+    },
+    {
+      story: "出金サービスと国内取引所の両方でADAを選択しました。手数料が安いチェーンを選び、取引所のADA入金アドレスを貼り付けています。",
+      fields: [["送付資産", "ADA"], ["入金対象資産", "ADA"], ["自分が選択したチェーン", "Bitcoin / BRC-20"], ["取引所指定チェーン", "Cardano"], ["送金額", "2,000 ADA"], ["アドレス", "取引所のADA入金画面から取得"]],
+      send: false,
+      checks: [[true, "資産名：ADAで一致"], [false, "チェーン：BRC-20とCardanoで不一致"], [false, "チェーン不一致ならアドレスを送金先に使えない"]],
+    },
+    {
+      story: "以前にも入金した取引所へ、同じウォレットからADAを送ります。入力には半年前にメモ帳へ保存したアドレスを使いました。",
+      fields: [["資産", "ADA"], ["チェーン", "Cardano"], ["保存済みアドレス", "addr1qold7s4n8m2k6p9r3t5v0w1a4d7f8g2h6j9k3m5n7p"], ["今回の公式入金画面", "まだ開いていない"], ["過去の入金", "半年前に成功"]],
+      send: false,
+      checks: [[true, "資産・チェーンは一致"], [false, "今回の公式入金画面を未確認"], [false, "保存アドレスが現在も有効とは限らない"]],
+    },
+    {
+      story: "Cardanoウォレット内のトークンを国内取引所へ移そうとしています。チェーンはどちらもCardanoなので、ADAの入金先を入力しました。",
+      fields: [["自分が選択した資産", "MIN / Cardano Native Token"], ["取引所の取扱資産", "ADAのみ"], ["自分が選択したチェーン", "Cardano"], ["取引所指定チェーン", "Cardano"], ["入力した送金先", "ADA入金アドレス"]],
+      send: false,
+      checks: [[true, "チェーン：Cardanoで一致"], [false, "資産：MINとADAで不一致"], [false, "取引所がMINを取り扱っていない"]],
+    },
+  ];
   // 中核6検査は毎回出題し、最後の1件だけ運用系ケースから交替で選ぶ。
   const coreCases = [cases[0], cases[2], cases[3], cases[5], cases[11], cases[12]];
   const optionalCases = cases.filter((item) => !coreCases.includes(item));
   const gameCases = pickRandomN(coreCases.concat(pickRandomN(optionalCases, 4)), 10);
+  let finalCase = pickRandomN(finalCases, 1)[0];
   const maxScore = gameCases.length * 100;
   const passScore = Math.ceil(gameCases.length * 0.8) * 100;
   let current = 0;
@@ -1587,13 +1632,13 @@ function buildExchangeGatekeeper() {
 
   const box = document.createElement("section");
   box.className = "gatekeeper";
-  box.setAttribute("aria-label", "Exchange Gatekeeper");
+  box.setAttribute("aria-label", "送金リスク度チェック");
 
   const top = document.createElement("div");
   top.className = "gatekeeper-top";
   const brand = document.createElement("div");
   brand.className = "gatekeeper-brand";
-  brand.innerHTML = '<span class="gatekeeper-mark">G</span><span><strong>EXCHANGE GATEKEEPER</strong><small>TRANSFER CONTROL / ADA</small></span>';
+  brand.innerHTML = '<span class="gatekeeper-mark">R</span><span><strong>送金リスク度チェック</strong><small>TRANSFER RISK ANALYSIS / ADA</small></span>';
   const scoreEl = document.createElement("div");
   scoreEl.className = "gatekeeper-score";
   top.append(brand, scoreEl);
@@ -1625,12 +1670,17 @@ function buildExchangeGatekeeper() {
     body.replaceChildren();
     const status = document.createElement("div");
     status.className = "gatekeeper-transfer-status";
-    status.textContent = "FINAL APPROVAL / 送金実行前";
+    status.textContent = "FINAL QUESTION / 最終判断";
     const title = document.createElement("h3");
-    title.textContent = "この送金を実行しますか？";
+    title.textContent = "あなたなら送金しますか？";
+    const story = document.createElement("p");
+    story.className = "gatekeeper-story";
+    const storyLabel = document.createElement("span");
+    storyLabel.textContent = "SCENARIO";
+    story.append(storyLabel, document.createTextNode(finalCase.story));
     const transfer = document.createElement("div");
     transfer.className = "gatekeeper-transfer-card";
-    [["送金額", "50,000 ADA"], ["ネットワーク", "Cardano"], ["宛先", "addr1q9m3k7x2v8n4c6p0r5t1y8w3e7u2i9o4a6s8d0f5g2h7j9k"], ["取消", "送信後は原則として取消不可"]].forEach(([key, value]) => {
+    finalCase.fields.forEach(([key, value]) => {
       const row = document.createElement("div");
       const label = document.createElement("span");
       label.textContent = key;
@@ -1641,34 +1691,40 @@ function buildExchangeGatekeeper() {
     });
     const caution = document.createElement("p");
     caution.className = "gatekeeper-transfer-caution";
-    caution.textContent = "最終確認です。受取人・資産・チェーン・アドレス・数量を確認してください。";
+    caution.textContent = "確認ポイント：資産・チェーン・金額・送金アドレスは、すべて一致していますか？";
     const actions = document.createElement("div");
     actions.className = "gatekeeper-transfer-actions";
-    const cancel = document.createElement("button");
-    cancel.type = "button";
-    cancel.className = "gatekeeper-next gatekeeper-cancel";
-    cancel.textContent = "戻って確認する";
-    cancel.addEventListener("click", renderFinish);
-    const send = document.createElement("button");
-    send.type = "button";
-    send.className = "gatekeeper-next gatekeeper-send-final";
-    send.textContent = "50,000 ADAを送金する";
-    send.addEventListener("click", () => {
+    const no = document.createElement("button");
+    no.type = "button";
+    no.className = "gatekeeper-next gatekeeper-final-no";
+    no.textContent = "NO　送金しない";
+    const yes = document.createElement("button");
+    yes.type = "button";
+    yes.className = "gatekeeper-next gatekeeper-send-final";
+    yes.textContent = "YES　送金する";
+
+    function showFinalAnswer(choseYes) {
       body.replaceChildren();
+      const correct = choseYes === finalCase.send;
       const stop = document.createElement("div");
-      stop.className = "gatekeeper-danger-mark";
-      stop.textContent = "!";
-      const dangerTitle = document.createElement("h3");
-      dangerTitle.className = "gatekeeper-danger-title";
-      dangerTitle.textContent = "SIMULATION STOPPED / これは危険です";
-      const danger = document.createElement("p");
-      danger.className = "gatekeeper-danger-copy";
-      danger.textContent = "画面には『公式』と表示されています。しかし、本当に公式でしょうか。詐欺撃退LEVELが高くても、この画面や宛先が本物だとは証明されません。まず、自分が登録している取引所の公式アプリまたは保存済みの正規URLを自分で開き、同じ告知や指示が実際に出ているか確認してください。公式側に情報がなければ、偽装の可能性があります。";
+      stop.className = correct ? "gatekeeper-safe-mark" : "gatekeeper-danger-mark";
+      stop.textContent = correct ? "✓" : "!";
+      const verdictTitle = document.createElement("h3");
+      verdictTitle.className = correct ? "gatekeeper-safe-title" : "gatekeeper-danger-title";
+      verdictTitle.textContent = correct
+        ? (choseYes ? "正解：送金条件は一致" : "正解：送金しない")
+        : (choseYes ? "不正解：送金してはいけません" : "再確認：送金できる条件です");
+      const verdict = document.createElement("p");
+      verdict.className = correct ? "gatekeeper-safe-copy" : "gatekeeper-danger-copy";
+      verdict.textContent = correct
+        ? (choseYes ? "公式画面、資産、チェーン、アドレス、少額テストを確認できています。ゲーム上では送金可能な条件です。実際のADAは送信されません。" : "不一致または未確認項目を発見し、送金を止められました。止まれたことが最終ゲートのクリアです。")
+        : (choseYes ? "確認項目に不一致または未確認事項があります。実際のADAは送信されず、シミュレーションが停止しました。" : "このケースでは各条件が一致し、少額テストまで確認済みです。何でもNOではなく、表示された根拠から判断します。実際のADAは送信されません。" );
       const facts = document.createElement("div");
       facts.className = "gatekeeper-danger-facts";
-      ["通知内のリンクや連絡先から確認しない", "登録済み取引所の公式アプリ・正規URLを自分で開く", "公式告知に同じ情報がなければ送金しない", "実際のADAは送信されていません", "送金完了ではなく『止まれた』ことがクリアです"].forEach((value) => {
+      finalCase.checks.concat([[true, "実際のADAは送信されていません"]]).forEach(([ok, value]) => {
         const item = document.createElement("span");
-        item.textContent = "■ " + value;
+        item.textContent = (ok ? "✓ " : "× ") + value;
+        if (!ok) item.classList.add("is-mismatch");
         facts.appendChild(item);
       });
       const retry = document.createElement("button");
@@ -1680,16 +1736,20 @@ function buildExchangeGatekeeper() {
         score = 0;
         streak = 0;
         mistakes.length = 0;
+        finalCase = pickRandomN(finalCases.filter((item) => item !== finalCase), 1)[0];
         for (let i = gameCases.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [gameCases[i], gameCases[j]] = [gameCases[j], gameCases[i]];
         }
         renderCase();
       });
-      body.append(stop, dangerTitle, danger, facts, retry);
-    });
-    actions.append(cancel, send);
-    body.append(status, title, transfer, caution, actions);
+      body.append(stop, verdictTitle, verdict, facts, retry);
+    }
+
+    no.addEventListener("click", () => showFinalAnswer(false));
+    yes.addEventListener("click", () => showFinalAnswer(true));
+    actions.append(no, yes);
+    body.append(status, title, story, transfer, caution, actions);
   }
 
   function renderFinish() {
@@ -1801,6 +1861,11 @@ function buildExchangeGatekeeper() {
     head.append(badge, risk);
     const title = document.createElement("h3");
     title.textContent = item.title;
+    const story = document.createElement("p");
+    story.className = "gatekeeper-story";
+    const storyLabel = document.createElement("span");
+    storyLabel.textContent = "SCENARIO";
+    story.append(storyLabel, document.createTextNode(stories[item.title] || "あなたはADAの送金操作を進めています。次の案内と画面データを確認し、安全に進められる状況か判断してください。"));
     const fields = document.createElement("div");
     fields.className = "gatekeeper-fields";
     item.fields.forEach(([label, value]) => {
@@ -1829,7 +1894,7 @@ function buildExchangeGatekeeper() {
     const resultBox = document.createElement("div");
     resultBox.className = "gatekeeper-result";
     buttons.forEach((button) => button.addEventListener("click", () => choose(button.dataset.action, buttons, resultBox)));
-    body.append(head, title, fields, prompt, actions, resultBox);
+    body.append(head, title, story, fields, prompt, actions, resultBox);
   }
 
   renderCase();
@@ -2118,7 +2183,7 @@ function renderNode(nodeId, opts = {}) {
   }
 
   if (node.type === "exchange-gatekeeper") {
-    appendBubble("🛡️ **Exchange Gatekeeper** — 送信前の異常を見抜き、送る・止める・公式へ確認の3択で資産を守ろう:", "bot");
+    appendBubble("🛡️ **送金リスク度チェック** — 文章と画面データを照合し、送信前のリスクを判断しよう:", "bot");
     appendBubble(buildExchangeGatekeeper(), "bot");
     clearOptions();
     renderNavButtons({ showBack: state.history.length > 0, showHome: true });

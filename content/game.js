@@ -10,14 +10,14 @@ export default {
         { label: "🎰 DRepスロット", next: "game-slot-drep" },
         { label: "⚔️ SPOカードバトル", next: "game-battle" },
         { label: "🏃 ADAランナー", next: "game-runner" },
-        { label: "🛡️ Exchange Gatekeeper", next: "game-gatekeeper" },
+        { label: "🛡️ 送金リスク度チェック", next: "game-gatekeeper" },
       ],
     },
 
     "game-gatekeeper": {
       type: "exchange-gatekeeper",
-      label: "🛡️ Exchange Gatekeeper",
-      keywords: ["Gatekeeper", "ゲートキーパー", "誤送付ゲーム", "取引所ゲーム"],
+      label: "🛡️ 送金リスク度チェック",
+      keywords: ["リスク度チェック", "送金リスク", "Gatekeeper", "ゲートキーパー", "誤送付ゲーム", "取引所ゲーム"],
     },
 
     "game-runner": {
