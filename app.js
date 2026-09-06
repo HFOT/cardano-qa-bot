@@ -1,13 +1,13 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=60";
-import spoContent from "./content/spo.js?v=60";
-import drepContent from "./content/drep.js?v=60";
-import scamContent from "./content/scam.js?v=60";
-import valueContent from "./content/value.js?v=60";
-import midnightContent from "./content/midnight.js?v=60";
-import gameContent from "./content/game.js?v=60";
-import exchangeContent from "./content/exchange.js?v=60";
-import basicsContent from "./content/basics.js?v=60";
+import walletContent from "./content/wallet.js?v=61";
+import spoContent from "./content/spo.js?v=61";
+import drepContent from "./content/drep.js?v=61";
+import scamContent from "./content/scam.js?v=61";
+import valueContent from "./content/value.js?v=61";
+import midnightContent from "./content/midnight.js?v=61";
+import gameContent from "./content/game.js?v=61";
+import exchangeContent from "./content/exchange.js?v=61";
+import basicsContent from "./content/basics.js?v=61";
 
 const HOME_NODE_ID = "home";
 
@@ -1968,7 +1968,8 @@ function renderNode(nodeId, opts = {}) {
     appendBubble(node.loadingText, "bot");
     clearOptions();
     const seq = ++recommendSeq;
-    Promise.all([fetchDrepSnapshot(), fetchRelayHealthPools()])
+    // プール側の失敗はこのノード全体を壊さない(表では「—」に落とす)
+    Promise.all([fetchDrepSnapshot(), fetchRelayHealthPools().catch(() => null)])
       .then(([snap, pools]) => {
         if (seq !== recommendSeq || state.currentNodeId !== nodeId) return;
         if (!snap || !snap.totals) throw new Error("no snapshot");
@@ -1976,17 +1977,33 @@ function renderNode(nodeId, opts = {}) {
         const num = (n) => Math.round(n).toLocaleString();
         // totals の *_m は百万ADA単位。10億単位に直して読みやすくする。
         const bil = (m) => (m / 1000).toFixed(2) + "B₳";
+        // 上流のフィールドが欠けたら NaN を「いまの数字」として出さず、エラー表示に落とす
+        const abstainish = t.abstain_delegators + t.no_confidence_delegators;
+        const checked = [
+          t.drep_count,
+          t.named_delegators,
+          t.abstain_delegators,
+          t.no_confidence_delegators,
+          abstainish,
+          t.active_stake_m,
+          t.circulation_m,
+        ];
+        if (snap.epoch === undefined || snap.epoch === null) throw new Error("no epoch");
+        if (!checked.every((v) => Number.isFinite(v))) throw new Error("malformed totals");
         const rows = [
           ["エポック", String(snap.epoch)],
-          ["ステークプール", pools ? num(pools.length) : "—"],
+          ["採点済みプール", pools ? num(pools.length) : "—"],
           ["DRep", num(t.drep_count)],
-          ["DRepへの委任者", num(t.total_delegators) + "人"],
+          ["DRepへの委任者", num(t.named_delegators)],
+          ["うち棄権・不信任", num(abstainish)],
           ["アクティブステーク", bil(t.active_stake_m)],
           ["流通量", bil(t.circulation_m)],
         ];
         appendBubble(buildRecommendTable(["項目", "いまの値"], rows), "bot");
         appendBubble(
-          "出典: DRep端末の公開スナップショット(" + snap.generated_at + ")と、リレー健全性ランキング。**数字は日々変わります。**",
+          "出典: 「採点済みプール」はリレー健全性ランキングが計測できたプールの件数で、Cardano全体の登録プール数ではありません。それ以外の数字は、DRep端末の公開スナップショット(" +
+            snap.generated_at +
+            "時点)です。**数字は日々変わります。**",
           "bot"
         );
         renderNavButtons({ showBack: state.history.length > 0, showHome: true });
