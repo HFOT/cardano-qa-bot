@@ -2274,7 +2274,11 @@ button.battle-stat:hover {
    ヒーローを詰め、プロモはこの領域内でスクロールさせて
    挨拶バブルと選択肢の表示域を必ず確保する */
 @media (max-width: 700px) {
+  /* 縦が足りないときフレックスがここも圧縮し、overflow:hidden のせいで
+     ティッカーの行が途中で切れる。ヒーローは縮ませず、圧縮は
+     スクロールできる #promo に寄せる */
   #hero {
+    flex: none;
     padding: 10px 16px 6px;
   }
 
@@ -2303,8 +2307,8 @@ button.battle-stat:hover {
     /* 中央寄せのままだと、あふれた分が上にはみ出してスクロールで戻れず、
        先頭のガバナンスSkillカードが上端で切れる。上寄せにして必ず届くようにする */
     justify-content: flex-start;
-    gap: 9px;
-    padding: 2px 14px 10px;
+    gap: 8px;
+    padding: 2px 14px 6px;
     /* 画面が短い端末では入りきらずスクロールになるので、下端に影を敷いて
        「続きがある」ことを示す。
        mask は使わないこと: 子孫を丸ごと切り抜くため、この中にある
@@ -2327,10 +2331,10 @@ button.battle-stat:hover {
   }
 
   .game-icon {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 10px;
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .game-app {
@@ -2391,7 +2395,7 @@ button.battle-stat:hover {
   }
 
   #chat-log {
-    min-height: 84px;
+    min-height: 60px;
   }
 
   .app-desc {
