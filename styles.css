@@ -109,12 +109,11 @@ body {
     "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", sans-serif;
   background: var(--bg);
   color: var(--text);
-  display: flex;
-  /* 中身が画面より広くなったとき、素の center は左右にはみ出させ、左側は
-     スクロールしても届かなくなる(アプリ内ブラウザで左が切れる原因)。
-     safe を付けると、あふれるときだけ先頭寄せに落ちる */
-  justify-content: center;
-  justify-content: safe center;
+  /* 以前は display:flex + justify-content:center で中央に置いていたが、
+     フレックス項目になると min-width の既定値や伸縮の解釈がブラウザで割れ、
+     アプリ内ブラウザで列が画面外へ寄ったり、逆に潰れて1文字ずつ折り返す
+     事故が起きた。中央寄せは margin だけで足りるので、フレックスをやめる */
+  display: block;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -122,9 +121,7 @@ body {
 #chat-app {
   width: 100%;
   max-width: 640px;
-  /* フレックス項目の既定 min-width:auto は「中身の最小幅より縮まない」。
-     長い選択肢が1つでも画面幅を超えると、ここが画面より広くなってしまう */
-  min-width: 0;
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
   height: 100vh;
