@@ -93,6 +93,10 @@ html {
      広いページと誤認してズーム+横スクロール状態で開く。ここで横あふれを塞ぐ */
   max-width: 100%;
   overflow-x: hidden;
+  /* Android の WebView は本文を勝手に拡大することがある。拡大されると選択肢が
+     画面幅を超え、下の中央寄せと相まって左に飛び出す。自動拡大を止める */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -106,7 +110,11 @@ body {
   background: var(--bg);
   color: var(--text);
   display: flex;
+  /* 中身が画面より広くなったとき、素の center は左右にはみ出させ、左側は
+     スクロールしても届かなくなる(アプリ内ブラウザで左が切れる原因)。
+     safe を付けると、あふれるときだけ先頭寄せに落ちる */
   justify-content: center;
+  justify-content: safe center;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -114,6 +122,9 @@ body {
 #chat-app {
   width: 100%;
   max-width: 640px;
+  /* フレックス項目の既定 min-width:auto は「中身の最小幅より縮まない」。
+     長い選択肢が1つでも画面幅を超えると、ここが画面より広くなってしまう */
+  min-width: 0;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -664,6 +675,7 @@ body {
 
 .option-btn {
   appearance: none;
+  max-width: 100%;
   background: var(--panel);
   border: 1px solid var(--border);
   color: var(--text);
