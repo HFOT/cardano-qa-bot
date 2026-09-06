@@ -1,13 +1,13 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=62";
-import spoContent from "./content/spo.js?v=62";
-import drepContent from "./content/drep.js?v=62";
-import scamContent from "./content/scam.js?v=62";
-import valueContent from "./content/value.js?v=62";
-import midnightContent from "./content/midnight.js?v=62";
-import gameContent from "./content/game.js?v=62";
-import exchangeContent from "./content/exchange.js?v=62";
-import basicsContent from "./content/basics.js?v=62";
+import walletContent from "./content/wallet.js?v=66";
+import spoContent from "./content/spo.js?v=66";
+import drepContent from "./content/drep.js?v=66";
+import scamContent from "./content/scam.js?v=66";
+import valueContent from "./content/value.js?v=66";
+import midnightContent from "./content/midnight.js?v=66";
+import gameContent from "./content/game.js?v=66";
+import exchangeContent from "./content/exchange.js?v=66";
+import basicsContent from "./content/basics.js?v=66";
 
 const HOME_NODE_ID = "home";
 
@@ -2805,7 +2805,12 @@ function renderEpochCard() {
     return;
   }
   const first = epochStart(epochAt(parsed.getTime()) + 4);
-  epochResultEl.textContent = "→ 報酬 " + fmtLocalDate(first);
+  // 帯を1行に収めるため月日だけ出す。年をまたぐときだけ年を足す
+  const sameYear = first.getFullYear() === new Date().getFullYear();
+  const short = sameYear
+    ? first.getMonth() + 1 + "/" + first.getDate()
+    : first.getFullYear() + "/" + (first.getMonth() + 1) + "/" + first.getDate();
+  epochResultEl.textContent = "→ 報酬 " + short;
 }
 
 function buildEpochBody() {

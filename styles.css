@@ -88,10 +88,17 @@
 
 html {
   height: 100%;
+  /* ヒーローのティッカーは1200px超の幅を持ち、#hero-feed の overflow で切っている。
+     アプリ内ブラウザ(X等)はCSS適用前の版面幅を採用することがあり、そのとき横に
+     広いページと誤認してズーム+横スクロール状態で開く。ここで横あふれを塞ぐ */
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
+  max-width: 100%;
+  overflow-x: hidden;
   min-height: 100vh;
   min-height: 100dvh;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans",
@@ -195,7 +202,7 @@ body {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 22px 24px 16px;
+  padding: 15px 24px 10px;
   overflow: hidden;
   /* Must exceed the hero's max natural content height or content will clip. */
   max-height: 200px;
@@ -317,7 +324,7 @@ body {
 #promo {
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
 }
 
 #promo-head {
@@ -651,8 +658,8 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding: 2px 16px 16px;
+  gap: 6px;
+  padding: 2px 16px 12px;
 }
 
 .option-btn {
@@ -660,8 +667,8 @@ body {
   background: var(--panel);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 9px 16px;
-  min-height: 44px;
+  padding: 7px 15px;
+  min-height: 38px;
   display: inline-flex;
   align-items: center;
   border-radius: 9999px;
@@ -2351,6 +2358,36 @@ button.battle-stat:hover {
     padding: 7px 14px;
     min-height: 40px;
     font-size: 13px;
+  }
+
+  /* エポック帯は「委任日 + 入力欄 + 結果」で、そのままだと横が1pxほど足りずに
+     折り返し、さらに type=date が普通の入力欄より背が高いぶん、価格カードより
+     縦を食う。文字と入力欄を詰めて1行に収める */
+  .epoch-lbl,
+  #epoch-result {
+    font-size: 10.5px;
+  }
+
+  #epoch-date {
+    padding: 0 5px;
+    height: 21px;
+    font-size: 10.5px;
+  }
+
+  .calc-row {
+    gap: 5px;
+  }
+
+  /* 選択肢は5段に折り返すので、1段あたりの高さが全体に効く */
+  .option-btn {
+    min-height: 34px;
+    padding: 5px 13px;
+    font-size: 12.5px;
+  }
+
+  #chat-options {
+    gap: 5px;
+    padding: 2px 14px 10px;
   }
 
   #chat-log {
