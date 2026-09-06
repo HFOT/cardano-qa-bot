@@ -721,7 +721,8 @@ body {
 
 /* ---------- ADA price card (総合サイトカードと同格・その直下) ---------- */
 
-#price-card {
+#price-card,
+#epoch-card {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -737,7 +738,8 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-#chart-btn {
+#chart-btn,
+#epoch-btn {
   margin-left: auto;
   flex: none;
   appearance: none;
@@ -752,18 +754,21 @@ body {
   transition: background-color 0.15s ease;
 }
 
-#chart-btn:hover {
+#chart-btn:hover,
+#epoch-btn:hover {
   background: var(--chrome-bg-hover);
 }
 
-#chart-btn:focus-visible {
+#chart-btn:focus-visible,
+#epoch-btn:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
 
 /* ---------- 価格チャートパネル ---------- */
 
-#chart-panel {
+#chart-panel,
+#epoch-panel {
   position: relative;
   width: min(580px, 100%);
   padding: 12px 14px;
@@ -773,7 +778,8 @@ body {
   box-shadow: var(--shadow-pill);
 }
 
-#chart-close {
+#chart-close,
+#epoch-close {
   position: absolute;
   top: 8px;
   right: 10px;
@@ -789,18 +795,21 @@ body {
   line-height: 1;
 }
 
-#chart-close:hover {
+#chart-close:hover,
+#epoch-close:hover {
   background: var(--chrome-bg-hover);
 }
 
-#chart-backdrop {
+#chart-backdrop,
+#epoch-backdrop {
   display: none;
 }
 
 /* スマホ: チャートはレイアウトを押し広げず、モーダルとして中央に表示
    (総合サイトカードなどが隠れないように) */
 @media (max-width: 700px) {
-  #chart-backdrop:not([hidden]) {
+  #chart-backdrop:not([hidden]),
+  #epoch-backdrop:not([hidden]) {
     display: block;
     position: fixed;
     inset: 0;
@@ -808,7 +817,8 @@ body {
     background: rgba(0, 0, 0, 0.45);
   }
 
-  #chart-panel:not([hidden]) {
+  #chart-panel:not([hidden]),
+  #epoch-panel:not([hidden]) {
     position: fixed;
     left: 50%;
     top: 50%;
@@ -2122,6 +2132,46 @@ button.battle-stat:hover {
   white-space: nowrap;
 }
 
+.epoch-lbl {
+  font-size: 11.5px;
+  color: var(--muted);
+  flex: none;
+}
+
+#epoch-date {
+  padding: 3px 8px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 11.5px;
+  font-family: inherit;
+}
+
+#epoch-date:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+#epoch-result {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+#epoch-body {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+#epoch-body b { color: var(--accent); }
+
+#epoch-body ol {
+  margin: 8px 0 0;
+  padding-left: 1.2em;
+}
+
 /* ---------- Input bar ---------- */
 
 #free-text-form {
@@ -2291,7 +2341,8 @@ button.battle-stat:hover {
     padding-top: 13px;
   }
 
-  #price-card {
+  #price-card,
+  #epoch-card {
     padding: 8px 12px;
   }
 

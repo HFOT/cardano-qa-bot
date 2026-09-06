@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="エポック">
+  <title>エポック</title>
+  <rect width="32" height="32" rx="7.5" fill="#0a0726"/>
+  <!-- 5日で一周する輪。開いた口と矢じりで「回っている」ことを示す -->
+  <path d="M24.5 16a8.5 8.5 0 1 1-3.4-6.8" fill="none" stroke="#3d9bff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M21.4 4.6v5.2h-5.2" fill="none" stroke="#3d9bff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="16" cy="16" r="2.6" fill="#8b6cff"/>
+</svg>

@@ -1,13 +1,13 @@
 // デプロイのたびに index.html の ?v= と合わせて番号を上げる(キャッシュの新旧混在防止)
-import walletContent from "./content/wallet.js?v=61";
-import spoContent from "./content/spo.js?v=61";
-import drepContent from "./content/drep.js?v=61";
-import scamContent from "./content/scam.js?v=61";
-import valueContent from "./content/value.js?v=61";
-import midnightContent from "./content/midnight.js?v=61";
-import gameContent from "./content/game.js?v=61";
-import exchangeContent from "./content/exchange.js?v=61";
-import basicsContent from "./content/basics.js?v=61";
+import walletContent from "./content/wallet.js?v=62";
+import spoContent from "./content/spo.js?v=62";
+import drepContent from "./content/drep.js?v=62";
+import scamContent from "./content/scam.js?v=62";
+import valueContent from "./content/value.js?v=62";
+import midnightContent from "./content/midnight.js?v=62";
+import gameContent from "./content/game.js?v=62";
+import exchangeContent from "./content/exchange.js?v=62";
+import basicsContent from "./content/basics.js?v=62";
 
 const HOME_NODE_ID = "home";
 
@@ -2767,3 +2767,114 @@ if (promoMore) {
     summary.focus({ preventScroll: true });
   });
 }
+// ---- エポック計算(委任日 → 初回報酬日・固定周期の算術のみ/通信なし) ----
+const EPOCH0_MS = Date.UTC(2017, 8, 23, 21, 44, 51); // エポック0の開始
+const EPOCH_MS = 432000000; // 5日
+
+const epochAt = (ms) => Math.floor((ms - EPOCH0_MS) / EPOCH_MS);
+const epochStart = (n) => new Date(EPOCH0_MS + n * EPOCH_MS);
+
+const epochNowEl = document.getElementById("epoch-now");
+const epochDateEl = document.getElementById("epoch-date");
+const epochResultEl = document.getElementById("epoch-result");
+const epochBtn = document.getElementById("epoch-btn");
+const epochPanel = document.getElementById("epoch-panel");
+const epochBackdrop = document.getElementById("epoch-backdrop");
+const epochClose = document.getElementById("epoch-close");
+const epochBody = document.getElementById("epoch-body");
+
+function fmtLocalDate(d) {
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return d.getFullYear() + "-" + mm + "-" + dd;
+}
+
+function renderEpochCard() {
+  const now = Date.now();
+  const cur = epochAt(now);
+  const leftMs = epochStart(cur + 1).getTime() - now;
+  const days = Math.floor(leftMs / 86400000);
+  const hours = Math.floor((leftMs % 86400000) / 3600000);
+  const left = (days > 0 ? days + "日" : "") + hours + "時間";
+  epochNowEl.textContent = "エポック " + cur + " · 次まで あと" + left;
+
+  const raw = epochDateEl.value;
+  const parsed = raw ? new Date(raw + "T00:00:00") : null;
+  if (!parsed || isNaN(parsed.getTime()) || parsed.getTime() < EPOCH0_MS) {
+    epochResultEl.textContent = "→ 報酬 –";
+    return;
+  }
+  const first = epochStart(epochAt(parsed.getTime()) + 4);
+  epochResultEl.textContent = "→ 報酬 " + fmtLocalDate(first);
+}
+
+function buildEpochBody() {
+  if (epochBody.childElementCount) return;
+
+  const p1 = document.createElement("p");
+  p1.append("Cardanoは");
+  const b1 = document.createElement("b");
+  b1.textContent = "5日ごと";
+  p1.append(b1, "の「エポック」という単位で動いています。委任してすぐ報酬が出ないのは、あいだに次の順番が挟まるからです。");
+
+  const ol = document.createElement("ol");
+
+  const li1 = document.createElement("li");
+  li1.append("委任したエポックの");
+  const b2 = document.createElement("b");
+  b2.textContent = "終わりに、その時点のステークが記録";
+  li1.append(b2, "されます(スナップショット)");
+
+  const li2 = document.createElement("li");
+  li2.append("その記録が");
+  const b3 = document.createElement("b");
+  b3.textContent = "2エポック後に有効";
+  li2.append(b3, "になり、プールの取り分に反映されます");
+
+  const li3 = document.createElement("li");
+  li3.textContent = "有効になったエポックの働きぶんの報酬が計算されます";
+
+  const li4 = document.createElement("li");
+  const b4 = document.createElement("b");
+  b4.textContent = "4エポック後の頭";
+  li4.append(b4, "に、最初の報酬が支払われます");
+
+  ol.append(li1, li2, li3, li4);
+
+  const p2 = document.createElement("p");
+  p2.append("つまり最短でも");
+  const b5 = document.createElement("b");
+  b5.textContent = "約15〜20日";
+  p2.append(b5, "かかります。それと、2025年のPlominハードフォーク以降は、");
+  const b6 = document.createElement("b");
+  b6.textContent = "受け取った報酬を引き出すのにDRepへの委任";
+  p2.append(b6, "も必要です。DRepを選びたくなければ「棄権(Abstain)」を選ぶこともできます。");
+
+  epochBody.append(p1, ol, p2);
+}
+
+function openEpochPanel() {
+  buildEpochBody();
+  epochPanel.hidden = false;
+  epochBackdrop.hidden = false;
+  epochBtn.textContent = "しくみ ▴";
+}
+
+function closeEpochPanel() {
+  epochPanel.hidden = true;
+  epochBackdrop.hidden = true;
+  epochBtn.textContent = "しくみ ▾";
+}
+
+epochBtn.addEventListener("click", () => {
+  if (epochPanel.hidden) openEpochPanel();
+  else closeEpochPanel();
+});
+epochClose.addEventListener("click", closeEpochPanel);
+epochBackdrop.addEventListener("click", closeEpochPanel);
+
+epochDateEl.addEventListener("change", renderEpochCard);
+epochDateEl.addEventListener("input", renderEpochCard);
+
+epochDateEl.value = fmtLocalDate(new Date());
+renderEpochCard();
